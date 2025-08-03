@@ -44,11 +44,12 @@ function trySignWithDifferentFormats(data: string, privateKey: string): string {
     for (let i = 0; i < formats.length; i++) {
         try {
             const formattedKey = formats[i]();
-            const sign = createSign('RSA-SHA256');
+            const sign = createSign('sha256'); // Changed from 'RSA-SHA256' to 'sha256'
             sign.update(data);
             const signature = sign.sign(formattedKey, 'hex');
             return signature;
         } catch (error) {
+            console.log(`Format ${i + 1} failed:`, error instanceof Error ? error.message : String(error));
             // Continue to next format if this one fails
         }
     }
@@ -97,7 +98,9 @@ export async function fetchAndSignManifest(
                 // Create signature using the private key
                 let signature = '';
                 try {
-                    signature = trySignWithDifferentFormats(JSON.stringify(manifestData), privateKey);
+                    // Sign only the files object, not the entire manifest
+                    const filesData = manifestData.files || {};
+                    signature = trySignWithDifferentFormats(JSON.stringify(filesData), privateKey);
                 } catch (signError) {
                     console.warn('Failed to sign manifest with private key, using placeholder signature:', signError);
                     signature = 'placeholder_signature_for_testing';
@@ -119,7 +122,9 @@ export async function fetchAndSignManifest(
         // Create signature using the private key
         let signature = '';
         try {
-            signature = trySignWithDifferentFormats(JSON.stringify(manifestData), privateKey);
+            // Sign only the files object, not the entire manifest
+            const filesData = manifestData.files || {};
+            signature = trySignWithDifferentFormats(JSON.stringify(filesData), privateKey);
         } catch (signError) {
             console.warn('Failed to sign manifest with private key, using placeholder signature:', signError);
             signature = 'placeholder_signature_for_testing';
@@ -155,4 +160,4 @@ export async function fetchRpManifest(
     privateKey: string
 ): Promise<{ files: Record<string, string>; signature: string }> {
     return await fetchAndSignManifest(baseUrl, manifestUrl, privateKey);
-} 
+}
