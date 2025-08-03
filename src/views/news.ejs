@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        .nav-glass {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .card-glass {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            transition: transform 0.2s ease;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        .modal-content {
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Override input default styles */
+        input, textarea {
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            color: white !important;
+            border: 1px solid #374151 !important;
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: #9CA3AF !important;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none !important;
+            border-color: #3B82F6 !important;
+        }
+        
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 10000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success {
+            background: linear-gradient(135deg, #10B981, #059669);
+            border-left: 4px solid #047857;
+        }
+        
+        .toast.error {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            border-left: 4px solid #B91C1C;
+        }
+        
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .toast-icon {
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-black text-white">
+    <!-- Navigation -->
+    <nav class="nav-glass border-b border-gray-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <div class="flex items-center space-x-2">
+                        <svg width="32" height="32" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g clip-path="url(#clip0_1_27)">
+                                <path d="M378.304 430.668C380.765 434.183 379.918 439.04 376.319 441.377C344.38 462.107 307.585 474.258 269.492 476.588C228.81 479.076 188.233 470.266 152.247 451.131C116.26 431.997 86.2659 403.284 65.58 368.166C44.8941 333.048 34.3224 292.894 35.0337 252.143C35.745 211.392 47.7116 171.631 69.6105 137.257C91.5094 102.882 122.488 75.2333 159.12 57.3665C195.752 39.4997 236.612 32.111 277.182 36.0174C315.17 39.6753 351.519 53.1033 382.715 74.9354C386.231 77.3959 386.908 82.2798 384.325 85.7069C381.743 89.134 376.879 89.8055 373.357 87.3544C344.455 67.2419 310.828 54.8689 275.693 51.4857C237.976 47.854 199.989 54.7231 165.932 71.3336C131.876 87.9441 103.076 113.649 82.7167 145.606C62.3576 177.564 51.2325 214.529 50.5712 252.414C49.9099 290.3 59.7382 327.631 78.9696 360.279C98.2009 392.927 126.086 419.622 159.542 437.411C192.998 455.2 230.722 463.39 268.543 461.077C303.775 458.922 337.813 447.73 367.399 428.639C371.005 426.312 375.842 427.153 378.304 430.668Z" fill="#D9D9D9"/>
+                                <circle cx="361.838" cy="255.838" r="149.838" fill="#D9D9D9"/>
+                            </g>
+                            <defs>
+                                <clipPath id="clip0_1_27">
+                                    <rect width="512" height="512" fill="white"/>
+                                </clipPath>
+                            </defs>
+                        </svg>
+                        <span class="text-lg font-semibold">MCCore</span>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-6">
+                        <a href="/" class="text-gray-300 hover:text-white transition-colors">Dashboard</a>
+                        <a href="/keys" class="text-gray-300 hover:text-white transition-colors">API Keys</a>
+                        <a href="/assets" class="text-gray-300 hover:text-white transition-colors">Assets</a>
+                        <a href="/java" class="text-gray-300 hover:text-white transition-colors">Java</a>
+                        <a href="/news" class="text-white font-semibold">News</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/logout" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        <!-- Header -->
+        <div class="mb-12">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">News Management</h1>
+                    <p class="text-gray-400 text-lg">Create and manage news articles for your launcher</p>
+                </div>
+                <button onclick="openCreateModal()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Create Article
+                </button>
+            </div>
+        </div>
+
+        <!-- News Articles Grid -->
+        <div id="newsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- News articles will be loaded here -->
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p class="text-gray-400">Loading news articles...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-12 hidden">
+            <i class="fas fa-newspaper text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-semibold mb-2">No News Articles</h3>
+            <p class="text-gray-400 mb-6">Create your first news article to get started</p>
+            <button onclick="openCreateModal()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                <i class="fas fa-plus mr-2"></i>Create Article
+            </button>
+        </div>
+    </main>
+
+    <!-- Create/Edit Modal -->
+    <div id="newsModal" class="modal">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="modal-content rounded-lg p-8 max-w-2xl w-full mx-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="modalTitle" class="text-2xl font-bold">Create News Article</h2>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="newsForm" class="space-y-6">
+                    <input type="hidden" id="articleId" name="id">
+                    
+                    <div>
+                        <label for="title" class="block text-sm font-medium mb-2">Title *</label>
+                        <input type="text" id="title" name="title" required
+                               class="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none text-white placeholder-gray-400">
+                    </div>
+
+                    <div>
+                        <label for="description" class="block text-sm font-medium mb-2">Description *</label>
+                        <textarea id="description" name="description" rows="4" required
+                                  class="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none resize-none text-white placeholder-gray-400"></textarea>
+                    </div>
+
+                    <div>
+                        <label for="image" class="block text-sm font-medium mb-2">Image URL</label>
+                        <input type="url" id="image" name="image"
+                               class="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none text-white placeholder-gray-400"
+                               placeholder="https://example.com/image.jpg">
+                    </div>
+
+                    <div class="flex justify-end space-x-4 pt-6">
+                        <button type="button" onclick="closeModal()" 
+                                class="px-6 py-3 border border-gray-600 rounded-lg hover:bg-gray-800 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" id="submitBtn"
+                                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                            <span id="submitText">Create Article</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="modal-content rounded-lg p-8 max-w-md w-full mx-4">
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">Delete Article</h3>
+                    <p class="text-gray-400 mb-6">Are you sure you want to delete this news article? This action cannot be undone.</p>
+                    
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="closeDeleteModal()" 
+                                class="px-6 py-3 border border-gray-600 rounded-lg hover:bg-gray-800 transition-colors">
+                            Cancel
+                        </button>
+                        <button onclick="confirmDelete()" 
+                                class="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:<%= process.env.PORT || 3000 %>/v1';
+        const API_KEY = '<%= apiKey %>';
+        let currentDeleteId = null;
+
+        // Load news articles on page load
+        document.addEventListener('DOMContentLoaded', loadNewsArticles);
+
+        async function loadNewsArticles() {
+            try {
+                // Show loading state
+                const loading = document.getElementById('loadingState');
+                const grid = document.getElementById('newsGrid');
+                const empty = document.getElementById('emptyState');
+                
+                loading.classList.remove('hidden');
+                grid.innerHTML = '';
+                empty.classList.add('hidden');
+                
+                const response = await fetch(`${API_BASE}/admin/news`, {
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch news articles');
+                }
+
+                const data = await response.json();
+                console.log('Loaded news articles:', data.news);
+                displayNewsArticles(data.news || []);
+            } catch (error) {
+                console.error('Error loading news articles:', error);
+                showError('Failed to load news articles');
+                
+                // Hide loading state on error
+                const loading = document.getElementById('loadingState');
+                loading.classList.add('hidden');
+            }
+        }
+
+        function displayNewsArticles(articles) {
+            const grid = document.getElementById('newsGrid');
+            const loading = document.getElementById('loadingState');
+            const empty = document.getElementById('emptyState');
+
+            loading.classList.add('hidden');
+
+            if (articles.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            grid.innerHTML = articles.map(article => `
+                <div class="card-glass rounded-lg p-6 hover-lift">
+                    ${article.image ? `
+                        <div class="mb-4">
+                            <img src="${article.image}" alt="${article.title}" 
+                                 class="w-full h-48 object-cover rounded-lg">
+                        </div>
+                    ` : ''}
+                    
+                    <h3 class="text-xl font-semibold mb-2">${article.title}</h3>
+                    <p class="text-gray-400 mb-4 line-clamp-3">${article.description}</p>
+                    
+                    <div class="flex justify-between items-center text-sm text-gray-500 mb-4">
+                        <span>Created: ${new Date(article.created_at).toLocaleDateString()}</span>
+                        <span>Modified: ${new Date(article.modified_at).toLocaleDateString()}</span>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="editArticle(${article.id})" 
+                                class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-sm">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </button>
+                        <button onclick="deleteArticle(${article.id})" 
+                                class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCreateModal() {
+            document.getElementById('modalTitle').textContent = 'Create News Article';
+            document.getElementById('submitText').textContent = 'Create Article';
+            document.getElementById('newsForm').reset();
+            document.getElementById('articleId').value = '';
+            document.getElementById('newsModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('newsModal').style.display = 'none';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            currentDeleteId = null;
+        }
+
+        async function editArticle(id) {
+            try {
+                const response = await fetch(`${API_BASE}/admin/news/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch article');
+                }
+
+                const data = await response.json();
+                const article = data.news;
+
+                document.getElementById('modalTitle').textContent = 'Edit News Article';
+                document.getElementById('submitText').textContent = 'Update Article';
+                document.getElementById('articleId').value = article.id;
+                document.getElementById('title').value = article.title;
+                document.getElementById('description').value = article.description;
+                document.getElementById('image').value = article.image || '';
+
+                document.getElementById('newsModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading article:', error);
+                showError('Failed to load article');
+            }
+        }
+
+        function deleteArticle(id) {
+            currentDeleteId = id;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        async function confirmDelete() {
+            if (!currentDeleteId) return;
+
+            try {
+                console.log('Deleting article with ID:', currentDeleteId);
+                const response = await fetch(`${API_BASE}/admin/news/${currentDeleteId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete article');
+                }
+
+                console.log('Article deleted successfully, reloading articles...');
+                closeDeleteModal();
+                await loadNewsArticles();
+                showSuccess('Article deleted successfully');
+            } catch (error) {
+                console.error('Error deleting article:', error);
+                showError('Failed to delete article');
+            }
+        }
+
+        document.getElementById('newsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const articleData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                image: formData.get('image') || ''
+            };
+
+            const id = formData.get('id');
+            const isEdit = id && id !== '';
+
+            try {
+                const url = isEdit ? `${API_BASE}/admin/news/${id}` : `${API_BASE}/admin/news`;
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(articleData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to save article');
+                }
+
+                closeModal();
+                loadNewsArticles();
+                showSuccess(`Article ${isEdit ? 'updated' : 'created'} successfully`);
+            } catch (error) {
+                console.error('Error saving article:', error);
+                showError('Failed to save article');
+            }
+        });
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            const bgClass = type === 'success' ? 'success' : 'error';
+            
+            toast.className = `toast ${bgClass}`;
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <i class="${icon} toast-icon"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Show the toast
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            // Hide and remove after 4 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => container.removeChild(toast), 300);
+            }, 4000);
+        }
+
+        function showSuccess(message) {
+            showToast(message, 'success');
+        }
+
+        function showError(message) {
+            showToast(message, 'error');
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const newsModal = document.getElementById('newsModal');
+            const deleteModal = document.getElementById('deleteModal');
+            
+            if (event.target === newsModal) {
+                closeModal();
+            }
+            if (event.target === deleteModal) {
+                closeDeleteModal();
+            }
+        }
+    </script>
+</body>
+</html> 

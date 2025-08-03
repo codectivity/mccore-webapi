@@ -1,0 +1,36 @@
+{
+  "name": "codectivity-mccore-webapi",
+  "version": "1.0.0",
+  "description": "The Web API for the Codectivity MCCore infrastructure.",
+  "main": "dist/server.js",
+  "scripts": {
+    "start": "node dist/server.js",
+    "build": "tsc && cp -r src/views dist/",
+    "dev": "nodemon --exec ts-node src/server.ts"
+  },
+  "keywords": [],
+  "author": "Codectivity",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "@types/ejs": "^3.1.5",
+    "@types/express-session": "^1.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "undici": "^7.11.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.10",
+    "@types/sqlite3": "^3.1.11",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

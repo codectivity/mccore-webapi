@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        .nav-glass {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        .card-glass {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-black text-white">
+    <!-- Navigation -->
+    <nav class="nav-glass border-b border-gray-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <div class="flex items-center space-x-2">
+                        <svg width="32" height="32" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g clip-path="url(#clip0_1_27)">
+                                <path d="M378.304 430.668C380.765 434.183 379.918 439.04 376.319 441.377C344.38 462.107 307.585 474.258 269.492 476.588C228.81 479.076 188.233 470.266 152.247 451.131C116.26 431.997 86.2659 403.284 65.58 368.166C44.8941 333.048 34.3224 292.894 35.0337 252.143C35.745 211.392 47.7116 171.631 69.6105 137.257C91.5094 102.882 122.488 75.2333 159.12 57.3665C195.752 39.4997 236.612 32.111 277.182 36.0174C315.17 39.6753 351.519 53.1033 382.715 74.9354C386.231 77.3959 386.908 82.2798 384.325 85.7069C381.743 89.134 376.879 89.8055 373.357 87.3544C344.455 67.2419 310.828 54.8689 275.693 51.4857C237.976 47.854 199.989 54.7231 165.932 71.3336C131.876 87.9441 103.076 113.649 82.7167 145.606C62.3576 177.564 51.2325 214.529 50.5712 252.414C49.9099 290.3 59.7382 327.631 78.9696 360.279C98.2009 392.927 126.086 419.622 159.542 437.411C192.998 455.2 230.722 463.39 268.543 461.077C303.775 458.922 337.813 447.73 367.399 428.639C371.005 426.312 375.842 427.153 378.304 430.668Z" fill="#D9D9D9"/>
+                                <circle cx="361.838" cy="255.838" r="149.838" fill="#D9D9D9"/>
+                            </g>
+                            <defs>
+                                <clipPath id="clip0_1_27">
+                                    <rect width="512" height="512" fill="white"/>
+                                </clipPath>
+                            </defs>
+                        </svg>
+                        <span class="text-lg font-semibold">MCCore</span>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-6">
+                        <a href="/" class="text-gray-300 hover:text-white transition-colors">Dashboard</a>
+                        <a href="/keys" class="text-gray-300 hover:text-white transition-colors">API Keys</a>
+                        <a href="/assets" class="text-gray-300 hover:text-white transition-colors">Assets</a>
+                        <a href="/java" class="text-gray-300 hover:text-white transition-colors">Java</a>
+                        <a href="/news" class="text-gray-300 hover:text-white transition-colors">News</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/logout" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        <!-- Header -->
+        <div class="mb-12">
+            <h1 class="text-4xl font-bold mb-4">Minecraft Launcher Admin</h1>
+            <p class="text-gray-400 text-lg">Manage your launcher assets, API keys, and Java configurations</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
+            <div class="card-glass rounded-lg p-6 hover-lift">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">API Keys</p>
+                        <p class="text-2xl font-bold"><%= apiKeys ? apiKeys.length : 0 %></p>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-key text-blue-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-glass rounded-lg p-6 hover-lift">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">Assets</p>
+                        <p class="text-2xl font-bold"><%= launcherAssets ? launcherAssets.length : 0 %></p>
+                    </div>
+                    <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-download text-green-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-glass rounded-lg p-6 hover-lift">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">Status</p>
+                        <p class="text-2xl font-bold text-green-400">Online</p>
+                    </div>
+                    <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-server text-green-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-glass rounded-lg p-6 hover-lift">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">Updated</p>
+                        <p class="text-2xl font-bold"><%= new Date().toLocaleDateString() %></p>
+                    </div>
+                    <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-clock text-purple-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-glass rounded-lg p-6 hover-lift">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-sm">News Articles</p>
+                        <p class="text-2xl font-bold"><%= newsArticles ? newsArticles.length : 0 %></p>
+                    </div>
+                    <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-newspaper text-orange-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Sections -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- API Keys Section -->
+            <div class="card-glass rounded-lg p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold">API Keys</h2>
+                    <a href="/keys" class="px-4 py-2 bg-white text-black rounded-md hover:bg-gray-100 transition-colors text-sm">
+                        Manage
+                    </a>
+                </div>
+                
+                <div class="space-y-3">
+                    <% if (apiKeys && apiKeys.length > 0) { %>
+                        <% apiKeys.slice(0, 3).forEach(key => { %>
+                            <div class="flex items-center justify-between p-3 bg-black/20 rounded-md">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                    <span class="text-sm"><%= key.name || 'Unnamed Key' %></span>
+                                </div>
+                                <span class="text-xs text-gray-400"><%= new Date(key.created_at).toLocaleDateString() %></span>
+                            </div>
+                        <% }); %>
+                        <% if (apiKeys.length > 3) { %>
+                            <div class="text-center text-sm text-gray-400">
+                                +<%= apiKeys.length - 3 %> more
+                            </div>
+                        <% } %>
+                    <% } else { %>
+                        <div class="text-center py-8 text-gray-400">
+                            <i class="fas fa-key text-2xl mb-2"></i>
+                            <p>No API keys found</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Assets Section -->
+            <div class="card-glass rounded-lg p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold">Launcher Assets</h2>
+                    <a href="/assets" class="px-4 py-2 bg-white text-black rounded-md hover:bg-gray-100 transition-colors text-sm">
+                        Manage
+                    </a>
+                </div>
+                
+                <div class="space-y-3">
+                    <% if (launcherAssets && launcherAssets.length > 0) { %>
+                        <% launcherAssets.slice(0, 3).forEach(asset => { %>
+                            <div class="flex items-center justify-between p-3 bg-black/20 rounded-md">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                                    <div>
+                                        <span class="text-sm"><%= asset.client_id %></span>
+                                        <p class="text-xs text-gray-400">v<%= asset.version %></p>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-gray-400"><%= asset.server %></span>
+                            </div>
+                        <% }); %>
+                        <% if (launcherAssets.length > 3) { %>
+                            <div class="text-center text-sm text-gray-400">
+                                +<%= launcherAssets.length - 3 %> more
+                            </div>
+                        <% } %>
+                    <% } else { %>
+                        <div class="text-center py-8 text-gray-400">
+                            <i class="fas fa-download text-2xl mb-2"></i>
+                            <p>No assets found</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-12">
+            <h2 class="text-xl font-semibold mb-6">Quick Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="/keys" class="card-glass rounded-lg p-6 hover-lift">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-plus text-blue-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold">Create API Key</h3>
+                            <p class="text-sm text-gray-400">Generate new access key</p>
+                        </div>
+                    </div>
+                </a>
+                
+                <a href="/assets" class="card-glass rounded-lg p-6 hover-lift">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-upload text-green-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold">Add Asset</h3>
+                            <p class="text-sm text-gray-400">Upload new launcher asset</p>
+                        </div>
+                    </div>
+                </a>
+                
+                <a href="/java" class="card-glass rounded-lg p-6 hover-lift">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-cog text-yellow-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold">Configure Java</h3>
+                            <p class="text-sm text-gray-400">Set up Java versions</p>
+                        </div>
+                    </div>
+                </a>
+                
+                <a href="/news" class="card-glass rounded-lg p-6 hover-lift">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-newspaper text-orange-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold">Manage News</h3>
+                            <p class="text-sm text-gray-400">Create and edit articles</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </main>
+</body>
+</html> 
