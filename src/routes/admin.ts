@@ -119,7 +119,7 @@ adminRouter.delete('/keys/:keyHash', async (req: Request, res: Response) => {
 // Create a new launcher asset
 adminRouter.post('/assets', async (req: Request, res: Response) => {
     try {
-        const { client_id, version, server, base_url, mods_manifest_url, rp_manifest_url, private_key } = req.body;
+        const { client_id, version, server, base_url, mods_manifest_url, rp_manifest_url, private_key, social_media } = req.body;
         
         if (!client_id || !version || !server || !base_url || !mods_manifest_url || !rp_manifest_url || !private_key) {
             res.status(400).json({ 
@@ -145,7 +145,8 @@ adminRouter.post('/assets', async (req: Request, res: Response) => {
             base_url,
             mods_manifest_url,
             rp_manifest_url,
-            private_key: formattedPrivateKey
+            private_key: formattedPrivateKey,
+            social_media: social_media ? JSON.stringify(social_media) : '{}'
         });
         
         res.status(201).json({
@@ -158,6 +159,7 @@ adminRouter.post('/assets', async (req: Request, res: Response) => {
                 base_url: asset.base_url,
                 mods_manifest_url: asset.mods_manifest_url,
                 rp_manifest_url: asset.rp_manifest_url,
+                social_media: asset.social_media,
                 created_at: asset.created_at
             }
         });
@@ -185,6 +187,7 @@ adminRouter.get('/assets', async (_req: Request, res: Response) => {
                 base_url: asset.base_url,
                 mods_manifest_url: asset.mods_manifest_url,
                 rp_manifest_url: asset.rp_manifest_url,
+                social_media: asset.social_media,
                 created_at: asset.created_at,
                 updated_at: asset.updated_at
             }))
@@ -222,6 +225,7 @@ adminRouter.get('/assets/:clientId', async (req: Request, res: Response) => {
                 base_url: asset.base_url,
                 mods_manifest_url: asset.mods_manifest_url,
                 rp_manifest_url: asset.rp_manifest_url,
+                social_media: asset.social_media,
                 created_at: asset.created_at,
                 updated_at: asset.updated_at
             }

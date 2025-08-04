@@ -88,8 +88,8 @@ export async function createLauncherAsset(
 ): Promise<LauncherAsset> {
     const result = await db.run(
         `INSERT INTO launcher_assets 
-         (client_id, version, server, base_url, mods_manifest_url, rp_manifest_url, private_key) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         (client_id, version, server, base_url, mods_manifest_url, rp_manifest_url, private_key, social_media) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             asset.client_id,
             asset.version,
@@ -97,7 +97,8 @@ export async function createLauncherAsset(
             asset.base_url,
             asset.mods_manifest_url,
             asset.rp_manifest_url,
-            asset.private_key
+            asset.private_key,
+            asset.social_media || '{}'
         ]
     );
     
@@ -110,6 +111,7 @@ export async function createLauncherAsset(
         mods_manifest_url: asset.mods_manifest_url,
         rp_manifest_url: asset.rp_manifest_url,
         private_key: asset.private_key,
+        social_media: asset.social_media || '{}',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };

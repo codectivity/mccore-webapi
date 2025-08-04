@@ -14,6 +14,7 @@ export interface LauncherAsset {
     mods_manifest_url: string; // URL to fetch mods manifest (e.g., "mods_manifest.json")
     rp_manifest_url: string; // URL to fetch resource pack manifest (e.g., "rp_manifest.json")
     private_key: string; // Private key for signing manifests
+    social_media: string; // JSON string of social media links
     created_at: string;
     updated_at: string;
 }
@@ -73,6 +74,7 @@ export async function initializeTables(db: Database): Promise<void> {
                 mods_manifest_url TEXT NOT NULL,
                 rp_manifest_url TEXT NOT NULL,
                 private_key TEXT NOT NULL,
+                social_media TEXT DEFAULT '{}',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
@@ -100,6 +102,17 @@ export async function initializeTables(db: Database): Promise<void> {
                 modified_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         `);
+
+        // Add social_media column to existing launcher_assets table if it doesn't exist
+        try {
+            await db.exec(`
+                ALTER TABLE launcher_assets 
+                ADD COLUMN social_media TEXT DEFAULT '{}'
+            `);
+        } catch (error) {
+            // Column might already exist, ignore error
+            console.log('social_media column might already exist or table is new');
+        }
 
         console.log('Database tables initialized successfully');
     } catch (error) {

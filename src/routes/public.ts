@@ -105,6 +105,17 @@ publicRouter.post('/assets/launcher', async (req: Request, res: Response, _next:
       fetchRpManifest(asset.base_url, asset.rp_manifest_url, asset.private_key)
     ]);
     
+    // Parse social media data
+    let socialMedia = {};
+    try {
+      if (asset.social_media) {
+        socialMedia = JSON.parse(asset.social_media);
+      }
+    } catch (error) {
+      console.error('Error parsing social media data:', error);
+      socialMedia = {};
+    }
+    
     // Return the launcher asset in the expected format
     res.json({
       base: asset.base_url,
@@ -117,7 +128,8 @@ publicRouter.post('/assets/launcher', async (req: Request, res: Response, _next:
         signature: rpData.signature
       },
       version: asset.version,
-      server: asset.server
+      server: asset.server,
+      social_media: socialMedia
     });
   } catch (error) {
     console.error('Error fetching launcher asset:', error);
