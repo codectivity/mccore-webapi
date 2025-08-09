@@ -49,7 +49,7 @@
                     <div class="hidden md:flex items-center space-x-6">
                         <a href="/" class="text-gray-300 hover:text-white transition-colors">Dashboard</a>
                         <a href="/keys" class="text-gray-300 hover:text-white transition-colors">API Keys</a>
-                        <a href="/assets" class="text-gray-300 hover:text-white transition-colors">Assets</a>
+                        <a href="/assets" class="text-gray-300 hover:text-white transition-colors">Launchers</a>
                         <a href="/java" class="text-gray-300 hover:text-white transition-colors">Java</a>
                         <a href="/news" class="text-gray-300 hover:text-white transition-colors">News</a>
                     </div>
@@ -88,7 +88,7 @@
             <div class="card-glass rounded-lg p-6 hover-lift">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-400 text-sm">Assets</p>
+                        <p class="text-gray-400 text-sm">Launchers</p>
                         <p class="text-2xl font-bold"><%= launcherAssets ? launcherAssets.length : 0 %></p>
                     </div>
                     <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
@@ -173,7 +173,7 @@
             <!-- Assets Section -->
             <div class="card-glass rounded-lg p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-semibold">Launcher Assets</h2>
+                    <h2 class="text-xl font-semibold">Launchers</h2>
                     <a href="/assets" class="px-4 py-2 bg-white text-black rounded-md hover:bg-gray-100 transition-colors text-sm">
                         Manage
                     </a>
@@ -201,7 +201,7 @@
                     <% } else { %>
                         <div class="text-center py-8 text-gray-400">
                             <i class="fas fa-download text-2xl mb-2"></i>
-                            <p>No assets found</p>
+                            <p>No launchers found</p>
                         </div>
                     <% } %>
                 </div>
@@ -230,8 +230,8 @@
                             <i class="fas fa-upload text-green-400"></i>
                         </div>
                         <div>
-                            <h3 class="font-semibold">Add Asset</h3>
-                            <p class="text-sm text-gray-400">Upload new launcher asset</p>
+                            <h3 class="font-semibold">Add Launcher</h3>
+                            <p class="text-sm text-gray-400">Add new launcher</p>
                         </div>
                     </div>
                 </a>

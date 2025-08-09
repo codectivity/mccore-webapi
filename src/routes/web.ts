@@ -175,7 +175,7 @@ webRouter.get('/keys', requireAuth, addApiKeyToResponse, (req: Request, res: Res
 // Launcher assets management page (requires auth)
 webRouter.get('/assets', requireAuth, addApiKeyToResponse, (req: Request, res: Response) => {
   res.render('assets', {
-    title: 'Launcher Assets Management',
+    title: 'Launcher Management',
     apiKey: (req.session as any)?.apiKey
   });
 });
