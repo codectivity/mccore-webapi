@@ -47,7 +47,7 @@ src/
 1. **Clone the repository**
    ```bash
    git clone https://github.com/codectivity/mccore-webapi.git
-   cd codectivity-mccore-webapi
+   cd mccore-webapi
    ```
 
 2. **Install dependencies**
