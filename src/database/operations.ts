@@ -256,12 +256,13 @@ export async function createNews(
     news: Omit<News, 'id' | 'created_at' | 'modified_at'>
 ): Promise<News> {
     const result = await db.run(
-        'INSERT INTO news (title, description, image) VALUES (?, ?, ?)',
-        [news.title, news.description, news.image]
+        'INSERT INTO news (client_id, title, description, image) VALUES (?, ?, ?, ?)',
+        [news.client_id ?? null, news.title, news.description, news.image]
     );
     
     return {
         id: result.lastID!,
+        client_id: news.client_id ?? null,
         title: news.title,
         description: news.description,
         image: news.image,
@@ -273,8 +274,14 @@ export async function createNews(
 /**
  * Get all news articles
  */
-export async function getAllNews(db: Database): Promise<News[]> {
-    return await db.all<News[]>('SELECT * FROM news ORDER BY created_at DESC');
+export async function getAllNews(db: Database, clientId?: string | null): Promise<News[]> {
+    if (typeof clientId === 'undefined') {
+        return await db.all<News[]>('SELECT * FROM news ORDER BY created_at DESC');
+    }
+    if (clientId === null || clientId === '') {
+        return await db.all<News[]>('SELECT * FROM news WHERE client_id IS NULL ORDER BY created_at DESC');
+    }
+    return await db.all<News[]>('SELECT * FROM news WHERE client_id = ? ORDER BY created_at DESC', [clientId]);
 }
 
 /**

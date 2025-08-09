@@ -158,15 +158,17 @@ publicRouter.get('/', (_req: Request, res: Response) => {
  * Public News Routes
  */
 
-// Get all news articles (public)
-publicRouter.get('/news', async (_req: Request, res: Response) => {
+// Get all news articles (public). Optional query: client_id to filter per launcher client
+publicRouter.get('/news', async (req: Request, res: Response) => {
     try {
         const db = getDatabase();
-        const news = await getAllNews(db);
+        const clientId = (req.query.client_id as string | undefined) ?? undefined;
+        const news = await getAllNews(db, clientId);
         
         res.json({
             news: news.map(article => ({
                 id: article.id,
+                client_id: article.client_id ?? null,
                 title: article.title,
                 description: article.description,
                 image: article.image,

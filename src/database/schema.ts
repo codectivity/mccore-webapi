@@ -38,6 +38,7 @@ export interface ApiKey {
 
 export interface News {
     id: number;
+    client_id: string | null; // Optional client association; null => global
     title: string;
     description: string;
     image: string; // URL to the news image
@@ -95,6 +96,7 @@ export async function initializeTables(db: Database): Promise<void> {
         await db.exec(`
             CREATE TABLE IF NOT EXISTS news (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                client_id TEXT,
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
                 image TEXT,
@@ -102,6 +104,17 @@ export async function initializeTables(db: Database): Promise<void> {
                 modified_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         `);
+
+        // Add client_id column to existing news table if it doesn't exist
+        try {
+            await db.exec(`
+                ALTER TABLE news 
+                ADD COLUMN client_id TEXT
+            `);
+        } catch (error) {
+            // Column might already exist, ignore error
+            console.log('client_id column for news might already exist or table is new');
+        }
 
         // Add social_media column to existing launcher_assets table if it doesn't exist
         try {

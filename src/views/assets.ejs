@@ -142,7 +142,7 @@
                         <div>
                             <label for="modsManifestUrl" class="block text-sm font-medium text-gray-300 mb-2">Mods Manifest URL</label>
                             <input 
-                                type="url" 
+                                type="text" 
                                 id="modsManifestUrl" 
                                 name="mods_manifest_url"
                                 placeholder="Enter mods manifest URL"
@@ -153,7 +153,7 @@
                         <div>
                             <label for="rpManifestUrl" class="block text-sm font-medium text-gray-300 mb-2">Resource Pack Manifest URL</label>
                             <input 
-                                type="url" 
+                                type="text" 
                                 id="rpManifestUrl" 
                                 name="rp_manifest_url"
                                 placeholder="Enter resource pack manifest URL"
@@ -259,6 +259,61 @@
         </div>
     </main>
 
+    <!-- Edit Asset Modal -->
+    <div id="editAssetModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto p-6 border w-full max-w-2xl shadow-2xl rounded-lg bg-gray-900 border-gray-700">
+            <div class="mb-6">
+                <h3 class="text-xl font-bold mb-2">Edit Launcher Asset</h3>
+                <p class="text-gray-400 text-sm">Update fields for the selected client</p>
+            </div>
+            <form id="editAssetForm" class="space-y-6">
+                <input type="hidden" id="edit_client_id" name="client_id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Client ID</label>
+                        <input type="text" id="edit_client_id_display" class="input-field w-full px-4 py-3 rounded-md text-white" disabled>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Version</label>
+                        <input type="text" id="edit_version" name="version" class="input-field w-full px-4 py-3 rounded-md text-white" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Server</label>
+                    <input type="text" id="edit_server" name="server" class="input-field w-full px-4 py-3 rounded-md text-white" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Base URL</label>
+                    <input type="url" id="edit_base_url" name="base_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Mods Manifest URL</label>
+                        <input type="text" id="edit_mods_manifest_url" name="mods_manifest_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Resource Pack Manifest URL</label>
+                        <input type="text" id="edit_rp_manifest_url" name="rp_manifest_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Private Key</label>
+                    <textarea id="edit_private_key" name="private_key" rows="8" class="input-field w-full px-4 py-3 rounded-md text-white font-mono text-sm" placeholder="Leave unchanged to keep current key"></textarea>
+                    <p class="text-xs text-gray-500 mt-2">If left empty, the existing key will be preserved</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Social Media Links (JSON)</label>
+                    <textarea id="edit_social_media" name="social_media" rows="4" class="input-field w-full px-4 py-3 rounded-md text-white font-mono text-sm" placeholder='{"discord":"https://..."}'></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="hideEditAssetModal()" class="px-6 py-3 text-gray-300 border border-gray-600 rounded-md hover:bg-gray-800 transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-3 bg-white text-black rounded-md hover:bg-gray-100 transition-colors">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         function showCreateAssetModal() {
             document.getElementById('createAssetModal').classList.remove('hidden');
@@ -323,7 +378,14 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                         ${new Date(asset.created_at).toLocaleDateString()}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 space-x-3">
+                        <button 
+                            onclick="openEditAsset('${asset.client_id}')"
+                            class="text-blue-400 hover:text-blue-300 transition-colors"
+                            title="Edit asset"
+                        >
+                            <i class="fas fa-edit"></i>
+                        </button>
                         <button 
                             onclick="deleteAsset('${asset.client_id}')"
                             class="text-red-400 hover:text-red-300 transition-colors"
@@ -368,6 +430,90 @@
         function removeSocialMediaEntry(button) {
             button.closest('.social-media-entry').remove();
         }
+
+        function showEditAssetModal() {
+            document.getElementById('editAssetModal').classList.remove('hidden');
+        }
+        function hideEditAssetModal() {
+            document.getElementById('editAssetModal').classList.add('hidden');
+        }
+
+        async function openEditAsset(clientId) {
+            try {
+                const response = await fetch(`/v1/admin/assets/${encodeURIComponent(clientId)}`, {
+                    headers: { 'Authorization': 'Bearer <%= apiKey %>' }
+                });
+                if (!response.ok) {
+                    alert('Failed to load asset');
+                    return;
+                }
+                const data = await response.json();
+                const a = data.asset;
+                document.getElementById('edit_client_id').value = a.client_id;
+                document.getElementById('edit_client_id_display').value = a.client_id;
+                document.getElementById('edit_version').value = a.version || '';
+                document.getElementById('edit_server').value = a.server || '';
+                document.getElementById('edit_base_url').value = a.base_url || '';
+                document.getElementById('edit_mods_manifest_url').value = a.mods_manifest_url || '';
+                document.getElementById('edit_rp_manifest_url').value = a.rp_manifest_url || '';
+                document.getElementById('edit_private_key').value = '';
+                try {
+                    const sm = a.social_media ? JSON.parse(a.social_media) : {};
+                    document.getElementById('edit_social_media').value = JSON.stringify(sm, null, 2);
+                } catch {
+                    document.getElementById('edit_social_media').value = a.social_media || '{}';
+                }
+                showEditAssetModal();
+            } catch (e) {
+                console.error('Error loading asset', e);
+                alert('Failed to load asset');
+            }
+        }
+
+        document.getElementById('editAssetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const clientId = (document.getElementById('edit_client_id').value || '').trim();
+            const updates = {
+                version: (document.getElementById('edit_version').value || '').trim(),
+                server: (document.getElementById('edit_server').value || '').trim(),
+                base_url: (document.getElementById('edit_base_url').value || '').trim(),
+                mods_manifest_url: (document.getElementById('edit_mods_manifest_url').value || '').trim(),
+                rp_manifest_url: (document.getElementById('edit_rp_manifest_url').value || '').trim(),
+            };
+            const pk = (document.getElementById('edit_private_key').value || '').trim();
+            if (pk) updates['private_key'] = pk;
+            const smText = (document.getElementById('edit_social_media').value || '').trim();
+            if (smText) {
+                try {
+                    const sm = JSON.parse(smText);
+                    updates['social_media'] = JSON.stringify(sm);
+                } catch (e) {
+                    alert('Social media must be valid JSON');
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch(`/v1/admin/assets/${encodeURIComponent(clientId)}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer <%= apiKey %>',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updates)
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    alert('Failed to update asset: ' + err.message);
+                    return;
+                }
+                hideEditAssetModal();
+                await loadAssets();
+            } catch (error) {
+                console.error('Error updating asset', error);
+                alert('Failed to update asset');
+            }
+        });
 
         function getSocialMediaDisplay(socialMediaJson) {
             if (!socialMediaJson) return 'None';

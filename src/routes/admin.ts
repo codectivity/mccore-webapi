@@ -243,7 +243,10 @@ adminRouter.get('/assets/:clientId', async (req: Request, res: Response) => {
 adminRouter.put('/assets/:clientId', async (req: Request, res: Response) => {
     try {
         const { clientId } = req.params;
-        const updates = req.body;
+        const updates = { ...req.body } as any;
+        if (typeof updates.private_key === 'string') {
+            updates.private_key = updates.private_key.replace(/\\n/g, '\n');
+        }
         
         const db = getDatabase();
         const asset = await getLauncherAssetByClientId(db, clientId);
@@ -436,10 +439,10 @@ adminRouter.put('/java', async (req: Request, res: Response) => {
  * News Management Routes
  */
 
-// Create a new news article
+// Create a new news article (optionally scoped to a client_id)
 adminRouter.post('/news', async (req: Request, res: Response) => {
     try {
-        const { title, description, image } = req.body;
+        const { client_id, title, description, image } = req.body;
         
         if (!title || !description) {
             res.status(400).json({ 
@@ -451,6 +454,7 @@ adminRouter.post('/news', async (req: Request, res: Response) => {
         
         const db = getDatabase();
         const news = await createNews(db, {
+            client_id: client_id ?? null,
             title,
             description,
             image: image || ''
@@ -460,6 +464,7 @@ adminRouter.post('/news', async (req: Request, res: Response) => {
             message: 'News article created successfully',
             news: {
                 id: news.id,
+                client_id: news.client_id ?? null,
                 title: news.title,
                 description: news.description,
                 image: news.image,
@@ -476,15 +481,17 @@ adminRouter.post('/news', async (req: Request, res: Response) => {
     }
 });
 
-// Get all news articles
-adminRouter.get('/news', async (_req: Request, res: Response) => {
+// Get all news articles (optionally filtered by client_id)
+adminRouter.get('/news', async (req: Request, res: Response) => {
     try {
         const db = getDatabase();
-        const news = await getAllNews(db);
+        const clientId = (req.query.client_id as string | undefined) ?? undefined;
+        const news = await getAllNews(db, clientId);
         
         res.json({
             news: news.map(article => ({
                 id: article.id,
+                client_id: article.client_id ?? null,
                 title: article.title,
                 description: article.description,
                 image: article.image,
@@ -519,6 +526,7 @@ adminRouter.get('/news/:id', async (req: Request, res: Response) => {
         res.json({
             news: {
                 id: news.id,
+                client_id: news.client_id ?? null,
                 title: news.title,
                 description: news.description,
                 image: news.image,

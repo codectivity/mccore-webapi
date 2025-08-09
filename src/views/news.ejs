@@ -146,6 +146,12 @@
                     <i class="fas fa-plus mr-2"></i>Create Article
                 </button>
             </div>
+            <div class="mt-4 flex items-center gap-3">
+                <label for="filterClientId" class="text-sm text-gray-300">Filter by Client ID:</label>
+                <input id="filterClientId" type="text" placeholder="Leave empty for ALL" class="px-3 py-2 rounded-md border border-gray-700 bg-black/50">
+                <button onclick="loadNewsArticles()" class="px-4 py-2 bg-white text-black rounded-md text-sm">Apply</button>
+                <button onclick="clearClientFilter()" class="px-4 py-2 border border-gray-700 rounded-md text-sm">Clear</button>
+            </div>
         </div>
 
         <!-- News Articles Grid -->
@@ -194,6 +200,13 @@
                         <label for="description" class="block text-sm font-medium mb-2">Description *</label>
                         <textarea id="description" name="description" rows="4" required
                                   class="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none resize-none text-white placeholder-gray-400"></textarea>
+                    </div>
+
+                    <div>
+                        <label for="client_id" class="block text-sm font-medium mb-2">Client ID (optional)</label>
+                        <input type="text" id="client_id" name="client_id"
+                               class="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none text-white placeholder-gray-400"
+                               placeholder="Leave empty for global news">
                     </div>
 
                     <div>
@@ -264,7 +277,9 @@
                 grid.innerHTML = '';
                 empty.classList.add('hidden');
                 
-                const response = await fetch(`${API_BASE}/admin/news`, {
+                const filterClientId = document.getElementById('filterClientId').value.trim();
+                const url = filterClientId ? `${API_BASE}/admin/news?client_id=${encodeURIComponent(filterClientId)}` : `${API_BASE}/admin/news`;
+                const response = await fetch(url, {
                     headers: {
                         'Authorization': `Bearer ${API_KEY}`
                     }
@@ -315,6 +330,10 @@
                     <div class="flex justify-between items-center text-sm text-gray-500 mb-4">
                         <span>Created: ${new Date(article.created_at).toLocaleDateString()}</span>
                         <span>Modified: ${new Date(article.modified_at).toLocaleDateString()}</span>
+                    </div>
+
+                    <div class="flex justify-between items-center text-xs text-gray-400 mb-2">
+                        <span>${article.client_id ? `Client: ${article.client_id}` : 'Global'}</span>
                     </div>
                     
                     <div class="flex space-x-2">
@@ -369,6 +388,7 @@
                 document.getElementById('title').value = article.title;
                 document.getElementById('description').value = article.description;
                 document.getElementById('image').value = article.image || '';
+                document.getElementById('client_id').value = article.client_id || '';
 
                 document.getElementById('newsModal').style.display = 'block';
             } catch (error) {
@@ -415,7 +435,8 @@
             const articleData = {
                 title: formData.get('title'),
                 description: formData.get('description'),
-                image: formData.get('image') || ''
+                image: formData.get('image') || '',
+                client_id: (formData.get('client_id') || '').toString().trim() || null
             };
 
             const id = formData.get('id');
@@ -472,6 +493,12 @@
                 toast.classList.remove('show');
                 setTimeout(() => container.removeChild(toast), 300);
             }, 4000);
+        }
+
+        function clearClientFilter() {
+            const input = document.getElementById('filterClientId');
+            input.value = '';
+            loadNewsArticles();
         }
 
         function showSuccess(message) {
