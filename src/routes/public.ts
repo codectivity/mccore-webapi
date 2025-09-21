@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { request } from 'undici';
 import { createSign } from 'crypto';
 import { getDatabase } from '../database';
-import { getLauncherAssetByClientId, getJavaAsset, getAllNews, getNewsById, formatVersionsForApi } from '../database/operations';
+import { getLauncherAssetByClientId, getJavaAsset, getAllNews, getNewsById, formatVersionsForApi, createHwidLog, isHwidBanned } from '../database/operations';
 import { fetchModsManifest, fetchRpManifest } from '../utils/manifest';
 
 const publicRouter = Router();
@@ -157,6 +157,67 @@ publicRouter.post('/assets/launcher', async (req: Request, res: Response, _next:
 
 publicRouter.get('/', (_req: Request, res: Response) => {
     res.json({ message: 'API Test' });
+});
+
+/**
+ * Public HWID Endpoints
+ */
+
+// Submit HWID information from launcher (public)
+publicRouter.post('/hwid', async (req: Request, res: Response) => {
+  try {
+    const { hwid, launcher_install_uuid, player_name, account_type, login_date, ip_address } = req.body || {};
+
+    if (!hwid || !launcher_install_uuid || !player_name || !account_type) {
+      res.status(400).json({
+        error: 'Bad Request',
+        message: 'hwid, launcher_install_uuid, player_name, and account_type are required'
+      });
+      return;
+    }
+
+    // Validate login_date or default to now
+    const loginDateIso = login_date ? new Date(login_date).toISOString() : new Date().toISOString();
+    if (Number.isNaN(Date.parse(loginDateIso))) {
+      res.status(400).json({ error: 'Bad Request', message: 'login_date must be a valid date' });
+      return;
+    }
+
+    const db = getDatabase();
+    const log = await createHwidLog(db, {
+      hwid: String(hwid),
+      launcher_install_uuid: String(launcher_install_uuid),
+      player_name: String(player_name),
+      account_type: String(account_type),
+      login_date: loginDateIso,
+      ip_address: ip_address || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || ''
+    });
+
+    res.status(201).json({
+      message: 'HWID logged',
+      id: log.id
+    });
+  } catch (error) {
+    console.error('Error logging HWID:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: 'Failed to log HWID' });
+  }
+});
+
+// Public endpoint to check if an HWID is banned; returns true/false
+publicRouter.get('/check-hwid', async (req: Request, res: Response) => {
+  try {
+    const hwid = (req.query.hwid as string) || (req.body?.hwid as string);
+    if (!hwid) {
+      res.status(400).json({ error: 'Bad Request', message: 'hwid is required' });
+      return;
+    }
+    const db = getDatabase();
+    const banned = await isHwidBanned(db, hwid);
+    res.json(banned);
+  } catch (error) {
+    console.error('Error checking HWID ban:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: 'Failed to check HWID' });
+  }
 });
 
 /**

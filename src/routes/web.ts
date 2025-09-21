@@ -196,4 +196,12 @@ webRouter.get('/news', requireAuth, addApiKeyToResponse, (req: Request, res: Res
   });
 });
 
+// HWIDs management page (requires auth)
+webRouter.get('/hwids', requireAuth, addApiKeyToResponse, (req: Request, res: Response) => {
+  res.render('hwids', {
+    title: 'HWID Logs & Bans',
+    apiKey: (req.session as any)?.apiKey
+  });
+});
+
 export default webRouter; 

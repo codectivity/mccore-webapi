@@ -1,5 +1,5 @@
 import { Database } from 'sqlite';
-import { ApiKey, LauncherAsset, JavaAsset, News } from './schema';
+import { ApiKey, LauncherAsset, JavaAsset, News, HwidLog, HwidBan } from './schema';
 import { createHash } from 'crypto';
 
 /**
@@ -335,3 +335,104 @@ export async function deleteNews(db: Database, id: number): Promise<boolean> {
     const result = await db.run('DELETE FROM news WHERE id = ?', [id]);
     return result.changes! > 0;
 } 
+
+/**
+ * HWID Logs and Bans Operations
+ */
+
+export async function createHwidLog(
+    db: Database,
+    payload: Omit<HwidLog, 'id' | 'created_at'>
+): Promise<HwidLog> {
+    const result = await db.run(
+        `INSERT INTO hwid_logs (hwid, launcher_install_uuid, player_name, account_type, login_date, ip_address)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+            payload.hwid,
+            payload.launcher_install_uuid,
+            payload.player_name,
+            payload.account_type,
+            payload.login_date,
+            (payload as any).ip_address || null
+        ]
+    );
+    return {
+        id: result.lastID!,
+        hwid: payload.hwid,
+        launcher_install_uuid: payload.launcher_install_uuid,
+        player_name: payload.player_name,
+        account_type: payload.account_type,
+        login_date: payload.login_date,
+        ip_address: (payload as any).ip_address || null,
+        created_at: new Date().toISOString()
+    };
+}
+
+export interface HwidLogSearchFilters {
+    hwid?: string;
+    launcher_install_uuid?: string;
+    player_name?: string;
+    account_type?: string;
+    ip_address?: string;
+    from_date?: string; // ISO date/time
+    to_date?: string;   // ISO date/time
+    limit?: number;
+    offset?: number;
+}
+
+export async function searchHwidLogs(db: Database, filters: HwidLogSearchFilters): Promise<{ total: number; logs: HwidLog[]; } > {
+    const whereClauses: string[] = [];
+    const params: any[] = [];
+
+    if (filters.hwid) { whereClauses.push('hwid LIKE ?'); params.push(`%${filters.hwid}%`); }
+    if (filters.launcher_install_uuid) { whereClauses.push('launcher_install_uuid LIKE ?'); params.push(`%${filters.launcher_install_uuid}%`); }
+    if (filters.player_name) { whereClauses.push('player_name LIKE ?'); params.push(`%${filters.player_name}%`); }
+    if (filters.account_type) { whereClauses.push('account_type = ?'); params.push(filters.account_type); }
+    if (filters.ip_address) { whereClauses.push('ip_address LIKE ?'); params.push(`%${filters.ip_address}%`); }
+    if (filters.from_date) { whereClauses.push('login_date >= ?'); params.push(filters.from_date); }
+    if (filters.to_date) { whereClauses.push('login_date <= ?'); params.push(filters.to_date); }
+
+    const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    const totalRow = await db.get<{ count: number }>(`SELECT COUNT(*) as count FROM hwid_logs ${whereSql}`, params);
+
+    const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
+    const offset = Math.max(filters.offset ?? 0, 0);
+
+    const logs = await db.all<HwidLog[]>(
+        `SELECT * FROM hwid_logs ${whereSql} ORDER BY login_date DESC, id DESC LIMIT ? OFFSET ?`,
+        [...params, limit, offset]
+    );
+
+    return { total: totalRow?.count || 0, logs };
+}
+
+export async function getHwidLogById(db: Database, id: number): Promise<HwidLog | null> {
+    const row = await db.get<HwidLog>('SELECT * FROM hwid_logs WHERE id = ?', [id]);
+    return row || null;
+}
+
+export async function isHwidBanned(db: Database, hwid: string): Promise<boolean> {
+    const row = await db.get<{ id: number }>('SELECT id FROM hwid_bans WHERE hwid = ?', [hwid]);
+    return !!row;
+}
+
+export async function createHwidBan(db: Database, hwid: string, reason: string): Promise<HwidBan> {
+    // Upsert: if exists, update reason and timestamp; otherwise insert
+    await db.run(
+        `INSERT INTO hwid_bans (hwid, reason) VALUES (?, ?)
+         ON CONFLICT(hwid) DO UPDATE SET reason = excluded.reason, created_at = CURRENT_TIMESTAMP`,
+        [hwid, reason || '']
+    );
+    const ban = await db.get<HwidBan>('SELECT * FROM hwid_bans WHERE hwid = ?', [hwid]);
+    return ban as HwidBan;
+}
+
+export async function deleteHwidBan(db: Database, hwid: string): Promise<boolean> {
+    const result = await db.run('DELETE FROM hwid_bans WHERE hwid = ?', [hwid]);
+    return result.changes! > 0;
+}
+
+export async function listHwidBans(db: Database): Promise<HwidBan[]> {
+    return await db.all<HwidBan[]>('SELECT * FROM hwid_bans ORDER BY created_at DESC');
+}

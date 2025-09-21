@@ -16,7 +16,11 @@ import {
     getAllNews,
     getNewsById,
     updateNews,
-    deleteNews
+    deleteNews,
+    searchHwidLogs,
+    createHwidBan,
+    deleteHwidBan,
+    listHwidBans
 } from '../database/operations';
 import { authenticateApiKey } from '../middleware/auth';
 
@@ -610,6 +614,83 @@ adminRouter.delete('/news/:id', async (req: Request, res: Response) => {
             error: 'Internal Server Error', 
             message: 'Failed to delete news article' 
         });
+    }
+});
+
+/**
+ * HWID Logs and Bans (Protected)
+ */
+
+// Search HWID logs with filters and pagination
+adminRouter.get('/hwids', async (req: Request, res: Response) => {
+    try {
+        const db = getDatabase();
+    const { hwid, launcher_install_uuid, player_name, account_type, ip_address, from_date, to_date } = req.query as any;
+        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+        const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
+
+        const result = await searchHwidLogs(db, {
+            hwid: hwid ? String(hwid) : undefined,
+            launcher_install_uuid: launcher_install_uuid ? String(launcher_install_uuid) : undefined,
+            player_name: player_name ? String(player_name) : undefined,
+            account_type: account_type ? String(account_type) : undefined,
+            ip_address: ip_address ? String(ip_address) : undefined,
+            from_date: from_date ? String(from_date) : undefined,
+            to_date: to_date ? String(to_date) : undefined,
+            limit,
+            offset
+        });
+
+        res.json({ total: result.total, logs: result.logs });
+    } catch (error) {
+        console.error('Error searching HWID logs:', error);
+        res.status(500).json({ error: 'Internal Server Error', message: 'Failed to fetch HWID logs' });
+    }
+});
+
+// List all HWID bans
+adminRouter.get('/hwids/bans', async (_req: Request, res: Response) => {
+    try {
+        const db = getDatabase();
+        const bans = await listHwidBans(db);
+        res.json({ bans });
+    } catch (error) {
+        console.error('Error listing HWID bans:', error);
+        res.status(500).json({ error: 'Internal Server Error', message: 'Failed to list bans' });
+    }
+});
+
+// Create or upsert a ban for an HWID
+adminRouter.post('/hwids/bans', async (req: Request, res: Response) => {
+    try {
+        const { hwid, reason } = req.body || {};
+        if (!hwid) {
+            res.status(400).json({ error: 'Bad Request', message: 'hwid is required' });
+            return;
+        }
+        const db = getDatabase();
+        const ban = await createHwidBan(db, String(hwid), String(reason || ''));
+        res.status(201).json({ message: 'HWID banned', ban });
+    } catch (error) {
+        console.error('Error creating HWID ban:', error);
+        res.status(500).json({ error: 'Internal Server Error', message: 'Failed to create ban' });
+    }
+});
+
+// Remove a ban for an HWID
+adminRouter.delete('/hwids/bans/:hwid', async (req: Request, res: Response) => {
+    try {
+        const { hwid } = req.params;
+        const db = getDatabase();
+        const success = await deleteHwidBan(db, String(hwid));
+        if (!success) {
+            res.status(404).json({ error: 'Not Found', message: 'Ban not found' });
+            return;
+        }
+        res.json({ message: 'Ban removed' });
+    } catch (error) {
+        console.error('Error deleting HWID ban:', error);
+        res.status(500).json({ error: 'Internal Server Error', message: 'Failed to delete ban' });
     }
 });
 
