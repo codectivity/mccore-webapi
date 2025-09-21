@@ -175,7 +175,7 @@
 
         async function loadJavaConfig() {
             try {
-                const response = await fetch('/v1/admin/java', {
+                const response = await fetch('/v2/admin/java', {
                     headers: {
                         'Authorization': 'Bearer <%= apiKey %>'
                     }
@@ -289,7 +289,7 @@
             }
             
             try {
-                const response = await fetch('/v1/admin/java', {
+                const response = await fetch('/v2/admin/java', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

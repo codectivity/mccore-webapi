@@ -13,7 +13,7 @@ const requireAuth = async (req: Request, res: Response, next: Function) => {
 
   // Validate API key by making a test request
   try {
-    const response = await request(`http://localhost:${process.env.PORT || 3000}/v1/admin/keys`, {
+    const response = await request(`http://localhost:${process.env.PORT || 3000}/v2/admin/keys`, {
       headers: {
         'Authorization': `Bearer ${apiKey}`
       }
@@ -62,7 +62,7 @@ webRouter.post('/login', async (req: Request, res: Response) => {
 
   try {
     // Validate API key
-    const response = await request(`http://localhost:${process.env.PORT || 3000}/v1/admin/keys`, {
+    const response = await request(`http://localhost:${process.env.PORT || 3000}/v2/admin/keys`, {
       headers: {
         'Authorization': `Bearer ${apiKey}`
       }
@@ -100,7 +100,7 @@ webRouter.get('/logout', (req: Request, res: Response) => {
 webRouter.get('/', requireAuth, addApiKeyToResponse, async (req: Request, res: Response) => {
   try {
     const apiKey = (req.session as any)?.apiKey;
-    const apiBase = `http://localhost:${process.env.PORT || 3000}/v1/admin`;
+    const apiBase = `http://localhost:${process.env.PORT || 3000}/v2/admin`;
     
     // Get API keys
     let apiKeys: any[] = [];

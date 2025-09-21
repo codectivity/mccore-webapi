@@ -88,11 +88,12 @@ export async function createLauncherAsset(
 ): Promise<LauncherAsset> {
     const result = await db.run(
         `INSERT INTO launcher_assets 
-         (client_id, version, server, base_url, mods_manifest_url, rp_manifest_url, private_key, social_media) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         (client_id, version, versions, server, base_url, mods_manifest_url, rp_manifest_url, private_key, social_media) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             asset.client_id,
             asset.version,
+            (asset as any).versions || null,
             asset.server,
             asset.base_url,
             asset.mods_manifest_url,
@@ -106,6 +107,7 @@ export async function createLauncherAsset(
         id: result.lastID!,
         client_id: asset.client_id,
         version: asset.version,
+        versions: (asset as any).versions || undefined,
         server: asset.server,
         base_url: asset.base_url,
         mods_manifest_url: asset.mods_manifest_url,
@@ -163,6 +165,21 @@ export async function updateLauncherAsset(
     );
     
     return result.changes! > 0;
+}
+
+/**
+ * Format versions JSON string for API response.
+ * If versions JSON is valid and non-empty array, return as array; otherwise return empty array.
+ */
+export function formatVersionsForApi(versionsJson: string | undefined | null): string[] {
+    if (!versionsJson) return [];
+    try {
+        const parsed = JSON.parse(versionsJson);
+        if (Array.isArray(parsed)) return parsed;
+        return [];
+    } catch {
+        return [];
+    }
 }
 
 /**

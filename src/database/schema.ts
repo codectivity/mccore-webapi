@@ -9,6 +9,7 @@ export interface LauncherAsset {
     id: number;
     client_id: string; // Public client identifier
     version: string; // Minecraft version (e.g., "1.20.1-forge")
+    versions?: string; // JSON string array of versions (e.g., ["1.20.1-forge"]) - optional for backward compatibility
     server: string;
     base_url: string;
     mods_manifest_url: string; // URL to fetch mods manifest (e.g., "mods_manifest.json")
@@ -70,6 +71,7 @@ export async function initializeTables(db: Database): Promise<void> {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 client_id TEXT UNIQUE NOT NULL,
                 version TEXT NOT NULL,
+                versions TEXT,
                 server TEXT NOT NULL,
                 base_url TEXT NOT NULL,
                 mods_manifest_url TEXT NOT NULL,
@@ -125,6 +127,17 @@ export async function initializeTables(db: Database): Promise<void> {
         } catch (error) {
             // Column might already exist, ignore error
             console.log('social_media column might already exist or table is new');
+        }
+
+        // Add versions column to existing launcher_assets table if it doesn't exist
+        try {
+            await db.exec(`
+                ALTER TABLE launcher_assets 
+                ADD COLUMN versions TEXT
+            `);
+        } catch (error) {
+            // Column might already exist, ignore error
+            console.log('versions column might already exist or table is new');
         }
 
         console.log('Database tables initialized successfully');

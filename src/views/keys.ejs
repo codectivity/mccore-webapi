@@ -161,7 +161,7 @@
 
         async function loadApiKeys() {
             try {
-                const response = await fetch('/v1/admin/keys', {
+                const response = await fetch('/v2/admin/keys', {
                     headers: {
                         'Authorization': 'Bearer <%= apiKey %>'
                     }
@@ -229,7 +229,7 @@
             const formData = new FormData(event.target);
             
             try {
-                const response = await fetch('/v1/admin/keys', {
+                const response = await fetch('/v2/admin/keys', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -262,7 +262,7 @@
             }
             
             try {
-                const response = await fetch(`/v1/admin/keys/${keyHash}`, {
+                const response = await fetch(`/v2/admin/keys/${keyHash}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': 'Bearer <%= apiKey %>'

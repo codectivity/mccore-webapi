@@ -10,7 +10,7 @@ import { initializeDatabase } from './database';
 
 const app = express();
 
-const currentVersion: string = 'v1';
+const currentVersion: string = 'v2';
 
 // Initialize database
 initializeDatabase().catch(console.error);

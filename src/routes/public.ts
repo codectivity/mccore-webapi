@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { request } from 'undici';
 import { createSign } from 'crypto';
 import { getDatabase } from '../database';
-import { getLauncherAssetByClientId, getJavaAsset, getAllNews, getNewsById } from '../database/operations';
+import { getLauncherAssetByClientId, getJavaAsset, getAllNews, getNewsById, formatVersionsForApi } from '../database/operations';
 import { fetchModsManifest, fetchRpManifest } from '../utils/manifest';
 
 const publicRouter = Router();
@@ -116,7 +116,11 @@ publicRouter.post('/assets/launcher', async (req: Request, res: Response, _next:
       socialMedia = {};
     }
     
-    // Return the launcher asset in the expected format
+    // Compute versions array (multi-version support)
+    const versionsArray = formatVersionsForApi((asset as any).versions || '[]');
+    const responseVersion = versionsArray.length > 0 ? versionsArray[0] : asset.version;
+
+    // Return the launcher asset in the expected format with multi-version support
     res.json({
       base: asset.base_url,
       mods: {
@@ -127,7 +131,8 @@ publicRouter.post('/assets/launcher', async (req: Request, res: Response, _next:
         files: rpData.files,
         signature: rpData.signature
       },
-      version: asset.version,
+      version: responseVersion,
+      versions: versionsArray,
       server: asset.server,
       social_media: socialMedia
     });
