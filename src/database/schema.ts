@@ -14,6 +14,7 @@ export interface LauncherAsset {
     base_url: string;
     mods_manifest_url: string; // URL to fetch mods manifest (e.g., "mods_manifest.json")
     rp_manifest_url: string; // URL to fetch resource pack manifest (e.g., "rp_manifest.json")
+    version_configs?: string; // JSON object keyed by version => { base_url, mods_manifest_url, rp_manifest_url }
     private_key: string; // Private key for signing manifests
     social_media: string; // JSON string of social media links
     created_at: string;
@@ -55,6 +56,7 @@ export interface HwidLog {
     account_type: string;
     login_date: string; // ISO datetime
     ip_address: string;
+    has_joined_with_this_hwid: boolean;
     created_at: string;
 }
 
@@ -62,6 +64,12 @@ export interface HwidBan {
     id: number;
     hwid: string;
     reason: string;
+    created_at: string;
+}
+
+export interface HwidJoined {
+    id: number;
+    hwid: string;
     created_at: string;
 }
 
@@ -94,6 +102,7 @@ export async function initializeTables(db: Database): Promise<void> {
                 base_url TEXT NOT NULL,
                 mods_manifest_url TEXT NOT NULL,
                 rp_manifest_url TEXT NOT NULL,
+                version_configs TEXT,
                 private_key TEXT NOT NULL,
                 social_media TEXT DEFAULT '{}',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -135,6 +144,7 @@ export async function initializeTables(db: Database): Promise<void> {
                 account_type TEXT NOT NULL,
                 login_date DATETIME NOT NULL,
                 ip_address TEXT,
+                has_joined_with_this_hwid INTEGER NOT NULL DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         `);
@@ -159,6 +169,9 @@ export async function initializeTables(db: Database): Promise<void> {
             }
             if (!colNames.has('ip_address')) {
                 await db.exec(`ALTER TABLE hwid_logs ADD COLUMN ip_address TEXT`);
+            }
+            if (!colNames.has('has_joined_with_this_hwid')) {
+                await db.exec(`ALTER TABLE hwid_logs ADD COLUMN has_joined_with_this_hwid INTEGER NOT NULL DEFAULT 0`);
             }
             if (!colNames.has('created_at')) {
                 await db.exec(`ALTER TABLE hwid_logs ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP`);
@@ -196,6 +209,7 @@ export async function initializeTables(db: Database): Promise<void> {
                         account_type TEXT,
                         login_date DATETIME,
                         ip_address TEXT,
+                        has_joined_with_this_hwid INTEGER NOT NULL DEFAULT 0,
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                     )
                 `);
@@ -207,11 +221,12 @@ export async function initializeTables(db: Database): Promise<void> {
                 const sel_account = colNames.has('account_type') ? 'account_type' : "'' AS account_type";
                 const sel_login = colNames.has('login_date') ? 'login_date' : (colNames.has('created_at') ? 'created_at AS login_date' : "datetime('now') AS login_date");
                 const sel_ip = colNames.has('ip_address') ? 'ip_address' : "'' AS ip_address";
+                const sel_joined = colNames.has('has_joined_with_this_hwid') ? 'has_joined_with_this_hwid' : '0 AS has_joined_with_this_hwid';
                 const sel_created = colNames.has('created_at') ? 'created_at' : "datetime('now') AS created_at";
 
                 await db.exec(`
-                    INSERT INTO hwid_logs_new (hwid, launcher_install_uuid, player_name, account_type, login_date, ip_address, created_at)
-                    SELECT ${sel_hwid}, ${sel_launcher}, ${sel_player}, ${sel_account}, ${sel_login}, ${sel_ip}, ${sel_created}
+                    INSERT INTO hwid_logs_new (hwid, launcher_install_uuid, player_name, account_type, login_date, ip_address, has_joined_with_this_hwid, created_at)
+                    SELECT ${sel_hwid}, ${sel_launcher}, ${sel_player}, ${sel_account}, ${sel_login}, ${sel_ip}, ${sel_joined}, ${sel_created}
                     FROM hwid_logs
                 `);
 
@@ -281,6 +296,18 @@ export async function initializeTables(db: Database): Promise<void> {
         } catch (e) {
             console.warn('Warning while ensuring hwid_bans columns:', e);
         }
+
+        // Create hwid_joined table for irreversible joined marks
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS hwid_joined (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hwid TEXT UNIQUE NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        await db.exec(`
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_hwid_joined_hwid ON hwid_joined(hwid);
+        `);
 
         // Add client_id column to existing news table if it doesn't exist
         try {

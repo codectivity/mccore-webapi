@@ -123,12 +123,13 @@ adminRouter.delete('/keys/:keyHash', async (req: Request, res: Response) => {
 // Create a new launcher asset
 adminRouter.post('/assets', async (req: Request, res: Response) => {
     try {
-        const { client_id, version, server, base_url, mods_manifest_url, rp_manifest_url, private_key, social_media } = req.body;
+        const { client_id } = req.body;
+        let { version, versions, server, base_url, mods_manifest_url, rp_manifest_url, version_configs, private_key, social_media } = req.body as any;
         
-        if (!client_id || !version || !server || !base_url || !mods_manifest_url || !rp_manifest_url || !private_key) {
+        if (!client_id || !version || !server || !private_key) {
             res.status(400).json({ 
                 error: 'Bad Request', 
-                message: 'client_id, version, server, base_url, mods_manifest_url, rp_manifest_url, and private_key are required' 
+                message: 'client_id, version, server, and private_key are required' 
             });
             return;
         }
@@ -142,13 +143,57 @@ adminRouter.post('/assets', async (req: Request, res: Response) => {
         console.log('Private key ends with:', formattedPrivateKey.substring(formattedPrivateKey.length - 30));
         
         const db = getDatabase();
+        // Normalize versions: merge version and versions into one array
+        let versionsArray: string[] = [];
+        if (Array.isArray(version)) {
+            versionsArray = version.filter((v: any) => typeof v === 'string' && v.trim()).map((v: string) => v.trim());
+        } else if (typeof version === 'string' && version.trim()) {
+            versionsArray = [version.trim()];
+        }
+        if (Array.isArray(versions)) {
+            versionsArray = versionsArray.concat(versions.filter((v: any) => typeof v === 'string' && v.trim()).map((v: string) => v.trim()));
+        } else if (typeof versions === 'string' && versions.trim()) {
+            try { const arr = JSON.parse(versions); if (Array.isArray(arr)) versionsArray = versionsArray.concat(arr); } catch {}
+        }
+        // De-duplicate while preserving order
+        versionsArray = Array.from(new Set(versionsArray));
+        const defaultVersion = versionsArray[0] || (typeof version === 'string' ? version : '');
+        const normalizedVersions = versionsArray.length > 0 ? JSON.stringify(versionsArray) : undefined;
+
+        // Handle version_configs: accept object or JSON string
+        let versionConfigsObj: Record<string, { base_url: string; mods_manifest_url: string; rp_manifest_url: string; }> | null = null;
+        if (typeof version_configs !== 'undefined') {
+            if (typeof version_configs === 'string') {
+                try { versionConfigsObj = JSON.parse(version_configs); } catch { versionConfigsObj = null; }
+            } else if (typeof version_configs === 'object' && version_configs !== null) {
+                versionConfigsObj = version_configs;
+            }
+        }
+
+        // If per-version configs provided, derive top-level URLs from default version config
+        if (versionConfigsObj && versionConfigsObj[defaultVersion]) {
+            if (!base_url) base_url = versionConfigsObj[defaultVersion].base_url;
+            if (!mods_manifest_url) mods_manifest_url = versionConfigsObj[defaultVersion].mods_manifest_url;
+            if (!rp_manifest_url) rp_manifest_url = versionConfigsObj[defaultVersion].rp_manifest_url;
+        }
+
+        // Validate we have some URL sources (either top-level or per-version default)
+        if (!base_url || !mods_manifest_url || !rp_manifest_url) {
+            res.status(400).json({
+                error: 'Bad Request',
+                message: 'base_url, mods_manifest_url, and rp_manifest_url are required (provide under version_configs for the default version or as top-level)'
+            });
+            return;
+        }
         const asset = await createLauncherAsset(db, {
             client_id,
-            version,
+            version: defaultVersion,
+            versions: normalizedVersions as any,
             server,
             base_url,
             mods_manifest_url,
             rp_manifest_url,
+            version_configs: versionConfigsObj ? JSON.stringify(versionConfigsObj) : undefined as any,
             private_key: formattedPrivateKey,
             social_media: social_media ? JSON.stringify(social_media) : '{}'
         });
@@ -158,11 +203,12 @@ adminRouter.post('/assets', async (req: Request, res: Response) => {
             asset: {
                 id: asset.id,
                 client_id: asset.client_id,
-                version: asset.version,
+                version: (asset.versions ? JSON.parse(asset.versions) : (asset.version ? [asset.version] : [])),
                 server: asset.server,
                 base_url: asset.base_url,
                 mods_manifest_url: asset.mods_manifest_url,
                 rp_manifest_url: asset.rp_manifest_url,
+                version_configs: asset.version_configs ? JSON.parse(asset.version_configs as any) : null,
                 social_media: asset.social_media,
                 created_at: asset.created_at
             }
@@ -186,11 +232,12 @@ adminRouter.get('/assets', async (_req: Request, res: Response) => {
             assets: assets.map(asset => ({
                 id: asset.id,
                 client_id: asset.client_id,
-                version: asset.version,
+                version: (asset.versions ? JSON.parse(asset.versions) : (asset.version ? [asset.version] : [])),
                 server: asset.server,
                 base_url: asset.base_url,
                 mods_manifest_url: asset.mods_manifest_url,
                 rp_manifest_url: asset.rp_manifest_url,
+                version_configs: asset.version_configs ? JSON.parse(asset.version_configs as any) : null,
                 social_media: asset.social_media,
                 created_at: asset.created_at,
                 updated_at: asset.updated_at
@@ -224,11 +271,12 @@ adminRouter.get('/assets/:clientId', async (req: Request, res: Response) => {
             asset: {
                 id: asset.id,
                 client_id: asset.client_id,
-                version: asset.version,
+                version: (asset.versions ? JSON.parse(asset.versions) : (asset.version ? [asset.version] : [])),
                 server: asset.server,
                 base_url: asset.base_url,
                 mods_manifest_url: asset.mods_manifest_url,
                 rp_manifest_url: asset.rp_manifest_url,
+                version_configs: asset.version_configs ? JSON.parse(asset.version_configs as any) : null,
                 social_media: asset.social_media,
                 created_at: asset.created_at,
                 updated_at: asset.updated_at
@@ -250,6 +298,73 @@ adminRouter.put('/assets/:clientId', async (req: Request, res: Response) => {
         const updates = { ...req.body } as any;
         if (typeof updates.private_key === 'string') {
             updates.private_key = updates.private_key.replace(/\\n/g, '\n');
+        }
+        // Normalize version_configs
+        if (typeof updates.version_configs !== 'undefined') {
+            if (updates.version_configs && typeof updates.version_configs === 'object') {
+                updates.version_configs = JSON.stringify(updates.version_configs);
+            } else if (typeof updates.version_configs === 'string') {
+                try {
+                    JSON.parse(updates.version_configs);
+                } catch {
+                    delete updates.version_configs; // invalid JSON; ignore
+                }
+            } else if (updates.version_configs === null) {
+                updates.version_configs = null;
+            }
+        }
+        // If client sent merged version array, split into default + versions JSON
+        if (typeof updates.version !== 'undefined') {
+            let versionsArray: string[] = [];
+            if (Array.isArray(updates.version)) {
+                versionsArray = updates.version.filter((v: any) => typeof v === 'string' && v.trim()).map((v: string) => v.trim());
+            } else if (typeof updates.version === 'string' && updates.version.trim()) {
+                try {
+                    // Accept JSON string or single version string
+                    const maybeArr = JSON.parse(updates.version);
+                    if (Array.isArray(maybeArr)) versionsArray = maybeArr;
+                    else versionsArray = [updates.version.trim()];
+                } catch {
+                    versionsArray = [updates.version.trim()];
+                }
+            }
+            if (Array.isArray(updates.versions)) {
+                versionsArray = versionsArray.concat(updates.versions.filter((v: any) => typeof v === 'string' && v.trim()).map((v: string) => v.trim()));
+            } else if (typeof updates.versions === 'string' && updates.versions.trim()) {
+                try { const arr = JSON.parse(updates.versions); if (Array.isArray(arr)) versionsArray = versionsArray.concat(arr); } catch {}
+            }
+            versionsArray = Array.from(new Set(versionsArray));
+            if (versionsArray.length > 0) {
+                updates.version = versionsArray[0];
+                updates.versions = JSON.stringify(versionsArray);
+            } else {
+                // If empty, remove to avoid overwriting with blank
+                delete updates.version;
+                delete updates.versions;
+            }
+        } else if (typeof updates.versions !== 'undefined') {
+            // Backward compat: only versions provided
+            if (Array.isArray(updates.versions)) {
+                const arr = updates.versions.filter((v: any) => typeof v === 'string' && v.trim()).map((v: string) => v.trim());
+                if (arr.length > 0) {
+                    updates.version = arr[0];
+                    updates.versions = JSON.stringify(arr);
+                } else {
+                    delete updates.versions;
+                }
+            } else if (typeof updates.versions === 'string') {
+                try {
+                    const arr = JSON.parse(updates.versions);
+                    if (Array.isArray(arr) && arr.length > 0) {
+                        updates.version = arr[0];
+                        updates.versions = JSON.stringify(arr);
+                    } else {
+                        delete updates.versions;
+                    }
+                } catch {
+                    delete updates.versions;
+                }
+            }
         }
         
         const db = getDatabase();
@@ -625,7 +740,7 @@ adminRouter.delete('/news/:id', async (req: Request, res: Response) => {
 adminRouter.get('/hwids', async (req: Request, res: Response) => {
     try {
         const db = getDatabase();
-    const { hwid, launcher_install_uuid, player_name, account_type, ip_address, from_date, to_date } = req.query as any;
+        const { hwid, launcher_install_uuid, player_name, account_type, ip_address, has_joined_with_this_hwid, from_date, to_date } = req.query as any;
         const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
         const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
 
@@ -635,6 +750,7 @@ adminRouter.get('/hwids', async (req: Request, res: Response) => {
             player_name: player_name ? String(player_name) : undefined,
             account_type: account_type ? String(account_type) : undefined,
             ip_address: ip_address ? String(ip_address) : undefined,
+            has_joined_with_this_hwid: typeof has_joined_with_this_hwid !== 'undefined' ? (has_joined_with_this_hwid === 'true' || has_joined_with_this_hwid === '1') : undefined,
             from_date: from_date ? String(from_date) : undefined,
             to_date: to_date ? String(to_date) : undefined,
             limit,

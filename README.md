@@ -84,7 +84,7 @@ SESSION_SECRET=your-secret-key-change-in-production
 ## API Documentation
 
 ### Base URL
-All API endpoints are prefixed with `/v1/`
+All API endpoints are prefixed with `/v2/`
 
 ### Public Endpoints
 
@@ -140,26 +140,38 @@ Returns Java runtime distribution information.
 }
 ```
 
-#### POST `/v1/public/assets/launcher`
-Returns launcher assets for a specific client.
+#### POST `/v2/public/assets/launcher`
+Returns launcher assets for a specific client, with optional per-version manifest resolution.
 
 **Request Body:**
 ```json
 {
-  "client_id": "your-client-id"
+  "client_id": "your-client-id",
+  "version": "1.20.1-fabric" // optional: choose a specific version's manifests
 }
 ```
 
 **Response:**
 ```json
 {
-  "version": "1.20.1-forge",
+  "version": ["1.20.1-forge", "1.20.1-fabric"],
   "server": "play.example.com",
-  "base_url": "https://example.com/assets/",
-  "mods_manifest_url": "https://example.com/mods_manifest.json",
-  "rp_manifest_url": "https://example.com/rp_manifest.json"
+  "base": "https://cdn.example.com/1.20.1-fabric/",  
+  "mods": {
+    "files": { "modA.jar": "sha256-hash", "modB.jar": "sha256-hash" },
+    "signature": "hex-signature"
+  },
+  "rp": {
+    "files": { "assets.zip": "sha256-hash" },
+    "signature": "hex-signature"
+  },
+  "social_media": { "discord": "https://discord.gg/..." }
 }
 ```
+
+Per-version manifests
+- If you send `version`, the API will use `version_configs[version]` for `base`, `mods`, and `rp` manifests if available; otherwise it falls back to default URLs.
+- If you omit `version`, defaults are used.
 
 ### Admin Endpoints (Require API Key)
 
@@ -184,7 +196,9 @@ Authorization: Bearer your-api-key
 
 #### Launcher Asset Management
 
-**POST `/v1/admin/assets/launcher`** - Create a launcher asset
+Note: Asset creation and updates are usually done via the Web UI.
+
+**POST `/v2/admin/assets`** - Create a launcher asset
 ```json
 {
   "client_id": "client-identifier",
@@ -197,13 +211,13 @@ Authorization: Bearer your-api-key
 }
 ```
 
-**GET `/v1/admin/assets/launcher`** - List all launcher assets
+**GET `/v2/admin/assets`** - List all launcher assets
 
-**GET `/v1/admin/assets/launcher/:clientId`** - Get specific launcher asset
+**GET `/v2/admin/assets/:clientId`** - Get specific launcher asset
 
-**PUT `/v1/admin/assets/launcher/:clientId`** - Update launcher asset
+**PUT `/v2/admin/assets/:clientId`** - Update launcher asset
 
-**DELETE `/v1/admin/assets/launcher/:clientId`** - Delete launcher asset
+**DELETE `/v2/admin/assets/:clientId`** - Delete launcher asset
 
 #### Java Asset Management
 

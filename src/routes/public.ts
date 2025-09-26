@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { request } from 'undici';
 import { createSign } from 'crypto';
 import { getDatabase } from '../database';
-import { getLauncherAssetByClientId, getJavaAsset, getAllNews, getNewsById, formatVersionsForApi, createHwidLog, isHwidBanned } from '../database/operations';
+import { getLauncherAssetByClientId, getJavaAsset, getAllNews, getNewsById, formatVersionsForApi, createHwidLog, isHwidBanned, markHwidJoined, isHwidJoined } from '../database/operations';
 import { fetchModsManifest, fetchRpManifest } from '../utils/manifest';
 
 const publicRouter = Router();
@@ -99,10 +99,25 @@ publicRouter.post('/assets/launcher', async (req: Request, res: Response, _next:
       return;
     }
     
-    // Fetch mods and resource pack manifests dynamically
+    // Decide which base and manifest URLs to use per requested version (if provided) or default
+    const requestedVersion = (req.body?.version as string | undefined) || undefined;
+    let baseUrl = asset.base_url;
+    let modsManifestUrl = asset.mods_manifest_url;
+    let rpManifestUrl = asset.rp_manifest_url;
+    try {
+      const vc = (asset as any).version_configs ? JSON.parse((asset as any).version_configs) as Record<string, { base_url: string; mods_manifest_url: string; rp_manifest_url: string; }> : null;
+      const useVersion = requestedVersion || undefined;
+      if (vc && useVersion && vc[useVersion]) {
+        baseUrl = vc[useVersion].base_url || baseUrl;
+        modsManifestUrl = vc[useVersion].mods_manifest_url || modsManifestUrl;
+        rpManifestUrl = vc[useVersion].rp_manifest_url || rpManifestUrl;
+      }
+    } catch {}
+
+    // Fetch mods and resource pack manifests dynamically from resolved URLs
     const [modsData, rpData] = await Promise.all([
-      fetchModsManifest(asset.base_url, asset.mods_manifest_url, asset.private_key),
-      fetchRpManifest(asset.base_url, asset.rp_manifest_url, asset.private_key)
+      fetchModsManifest(baseUrl, modsManifestUrl, asset.private_key),
+      fetchRpManifest(baseUrl, rpManifestUrl, asset.private_key)
     ]);
     
     // Parse social media data
@@ -118,11 +133,10 @@ publicRouter.post('/assets/launcher', async (req: Request, res: Response, _next:
     
     // Compute versions array (multi-version support)
     const versionsArray = formatVersionsForApi((asset as any).versions || '[]');
-    const responseVersion = versionsArray.length > 0 ? versionsArray[0] : asset.version;
 
-    // Return the launcher asset in the expected format with multi-version support
+    // Return launcher asset with single version field as an array (merged)
     res.json({
-      base: asset.base_url,
+      base: baseUrl,
       mods: {
         files: modsData.files,
         signature: modsData.signature
@@ -131,8 +145,7 @@ publicRouter.post('/assets/launcher', async (req: Request, res: Response, _next:
         files: rpData.files,
         signature: rpData.signature
       },
-      version: responseVersion,
-      versions: versionsArray,
+      version: versionsArray.length > 0 ? versionsArray : [asset.version],
       server: asset.server,
       social_media: socialMedia
     });
@@ -166,7 +179,7 @@ publicRouter.get('/', (_req: Request, res: Response) => {
 // Submit HWID information from launcher (public)
 publicRouter.post('/hwid', async (req: Request, res: Response) => {
   try {
-    const { hwid, launcher_install_uuid, player_name, account_type, login_date, ip_address } = req.body || {};
+    const { hwid, launcher_install_uuid, player_name, account_type, login_date, ip_address, has_joined_with_this_hwid } = req.body || {};
 
     if (!hwid || !launcher_install_uuid || !player_name || !account_type) {
       res.status(400).json({
@@ -184,13 +197,16 @@ publicRouter.post('/hwid', async (req: Request, res: Response) => {
     }
 
     const db = getDatabase();
+    // If HWID previously marked as joined, force the flag true on the log
+    const joined = await isHwidJoined(db, String(hwid));
     const log = await createHwidLog(db, {
       hwid: String(hwid),
       launcher_install_uuid: String(launcher_install_uuid),
       player_name: String(player_name),
       account_type: String(account_type),
       login_date: loginDateIso,
-      ip_address: ip_address || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || ''
+      ip_address: ip_address || (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || '',
+      has_joined_with_this_hwid: joined || !!has_joined_with_this_hwid
     });
 
     res.status(201).json({
@@ -200,6 +216,23 @@ publicRouter.post('/hwid', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error logging HWID:', error);
     res.status(500).json({ error: 'Internal Server Error', message: 'Failed to log HWID' });
+  }
+});
+
+// Public endpoint to irreversibly mark an HWID as joined
+publicRouter.post('/hwid/joined', async (req: Request, res: Response) => {
+  try {
+    const { hwid } = req.body || {};
+    if (!hwid) {
+      res.status(400).json({ error: 'Bad Request', message: 'hwid is required' });
+      return;
+    }
+    const db = getDatabase();
+    const row = await markHwidJoined(db, String(hwid));
+    res.status(201).json({ message: 'HWID marked as joined', hwid: row.hwid, created_at: row.created_at });
+  } catch (error) {
+    console.error('Error marking HWID joined:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: 'Failed to mark joined' });
   }
 });
 

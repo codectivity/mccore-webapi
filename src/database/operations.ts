@@ -1,5 +1,5 @@
 import { Database } from 'sqlite';
-import { ApiKey, LauncherAsset, JavaAsset, News, HwidLog, HwidBan } from './schema';
+import { ApiKey, LauncherAsset, JavaAsset, News, HwidLog, HwidBan, HwidJoined } from './schema';
 import { createHash } from 'crypto';
 
 /**
@@ -88,8 +88,8 @@ export async function createLauncherAsset(
 ): Promise<LauncherAsset> {
     const result = await db.run(
         `INSERT INTO launcher_assets 
-         (client_id, version, versions, server, base_url, mods_manifest_url, rp_manifest_url, private_key, social_media) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (client_id, version, versions, server, base_url, mods_manifest_url, rp_manifest_url, version_configs, private_key, social_media) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             asset.client_id,
             asset.version,
@@ -98,6 +98,7 @@ export async function createLauncherAsset(
             asset.base_url,
             asset.mods_manifest_url,
             asset.rp_manifest_url,
+            (asset as any).version_configs || null,
             asset.private_key,
             asset.social_media || '{}'
         ]
@@ -112,6 +113,7 @@ export async function createLauncherAsset(
         base_url: asset.base_url,
         mods_manifest_url: asset.mods_manifest_url,
         rp_manifest_url: asset.rp_manifest_url,
+        version_configs: (asset as any).version_configs || undefined,
         private_key: asset.private_key,
         social_media: asset.social_media || '{}',
         created_at: new Date().toISOString(),
@@ -345,15 +347,16 @@ export async function createHwidLog(
     payload: Omit<HwidLog, 'id' | 'created_at'>
 ): Promise<HwidLog> {
     const result = await db.run(
-        `INSERT INTO hwid_logs (hwid, launcher_install_uuid, player_name, account_type, login_date, ip_address)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO hwid_logs (hwid, launcher_install_uuid, player_name, account_type, login_date, ip_address, has_joined_with_this_hwid)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
             payload.hwid,
             payload.launcher_install_uuid,
             payload.player_name,
             payload.account_type,
             payload.login_date,
-            (payload as any).ip_address || null
+            (payload as any).ip_address || null,
+            (payload as any).has_joined_with_this_hwid ? 1 : 0
         ]
     );
     return {
@@ -364,6 +367,7 @@ export async function createHwidLog(
         account_type: payload.account_type,
         login_date: payload.login_date,
         ip_address: (payload as any).ip_address || null,
+        has_joined_with_this_hwid: !!(payload as any).has_joined_with_this_hwid,
         created_at: new Date().toISOString()
     };
 }
@@ -374,6 +378,7 @@ export interface HwidLogSearchFilters {
     player_name?: string;
     account_type?: string;
     ip_address?: string;
+    has_joined_with_this_hwid?: boolean;
     from_date?: string; // ISO date/time
     to_date?: string;   // ISO date/time
     limit?: number;
@@ -389,6 +394,7 @@ export async function searchHwidLogs(db: Database, filters: HwidLogSearchFilters
     if (filters.player_name) { whereClauses.push('player_name LIKE ?'); params.push(`%${filters.player_name}%`); }
     if (filters.account_type) { whereClauses.push('account_type = ?'); params.push(filters.account_type); }
     if (filters.ip_address) { whereClauses.push('ip_address LIKE ?'); params.push(`%${filters.ip_address}%`); }
+    if (typeof filters.has_joined_with_this_hwid === 'boolean') { whereClauses.push('has_joined_with_this_hwid = ?'); params.push(filters.has_joined_with_this_hwid ? 1 : 0); }
     if (filters.from_date) { whereClauses.push('login_date >= ?'); params.push(filters.from_date); }
     if (filters.to_date) { whereClauses.push('login_date <= ?'); params.push(filters.to_date); }
 
@@ -435,4 +441,20 @@ export async function deleteHwidBan(db: Database, hwid: string): Promise<boolean
 
 export async function listHwidBans(db: Database): Promise<HwidBan[]> {
     return await db.all<HwidBan[]>('SELECT * FROM hwid_bans ORDER BY created_at DESC');
+}
+
+// Irreversible "joined" marks
+export async function markHwidJoined(db: Database, hwid: string): Promise<HwidJoined> {
+    await db.run(
+        `INSERT INTO hwid_joined (hwid) VALUES (?)
+         ON CONFLICT(hwid) DO NOTHING`,
+        [hwid]
+    );
+    const row = await db.get<HwidJoined>('SELECT * FROM hwid_joined WHERE hwid = ?', [hwid]);
+    return row as HwidJoined;
+}
+
+export async function isHwidJoined(db: Database, hwid: string): Promise<boolean> {
+    const row = await db.get<{ id: number }>('SELECT id FROM hwid_joined WHERE hwid = ?', [hwid]);
+    return !!row;
 }

@@ -79,6 +79,11 @@
                 </select>
                 <input class="input-field px-3 py-2 rounded" type="datetime-local" name="from_date" placeholder="From date">
                 <input class="input-field px-3 py-2 rounded" type="datetime-local" name="to_date" placeholder="To date">
+                <select class="input-field px-3 py-2 rounded" name="has_joined_with_this_hwid">
+                    <option value="">Has joined with this HWID (any)</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
                 <div class="md:col-span-3 flex gap-3 justify-end">
                     <button type="button" id="resetBtn" class="px-4 py-2 border border-gray-600 rounded">Reset</button>
                     <button type="submit" class="px-4 py-2 bg-white text-black rounded">Search</button>
@@ -103,6 +108,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">HWID</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Launcher UUID</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">IP</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Joined?</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -181,6 +187,7 @@
                     <td class="px-6 py-3 whitespace-nowrap text-xs text-gray-400">${l.hwid}</td>
                     <td class="px-6 py-3 whitespace-nowrap text-xs text-gray-400">${l.launcher_install_uuid}</td>
                     <td class="px-6 py-3 whitespace-nowrap text-xs text-gray-400">${l.ip_address || ''}</td>
+                    <td class="px-6 py-3 whitespace-nowrap text-xs">${l.has_joined_with_this_hwid ? '<span class="badge badge-green">Yes</span>' : '<span class="badge badge-red">No</span>'}</td>
                     <td class="px-6 py-3 whitespace-nowrap text-sm">
                         ${bannedSet.has(l.hwid)
                             ? `<button class="px-3 py-1 border border-gray-700 rounded" onclick="unban('${l.hwid}')">Unban</button>`

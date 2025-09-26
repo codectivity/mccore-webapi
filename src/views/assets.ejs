@@ -106,17 +106,21 @@
                             >
                         </div>
                         <div>
-                            <label for="version" class="block text-sm font-medium text-gray-300 mb-2">Version</label>
-                            <input 
-                                type="text" 
-                                id="version" 
-                                name="version"
-                                placeholder="Enter version"
-                                class="input-field w-full px-4 py-3 rounded-md text-white placeholder-gray-400"
-                                required
-                            >
+                            <label for="version" class="block text-sm font-medium text-gray-300 mb-2">Default Version</label>
+                            <div class="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    id="version" 
+                                    name="version"
+                                    placeholder="e.g., 1.20.1-forge"
+                                    class="input-field flex-1 px-4 py-3 rounded-md text-white placeholder-gray-400"
+                                    required
+                                >
+                                <button type="button" onclick="addVersionEntry()" class="px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap" title="Add version"><i class="fas fa-plus"></i></button>
+                            </div>
                         </div>
                     </div>
+                    <div id="versionsContainer" class="space-y-2 mt-2"></div>
                     <div>
                         <label for="server" class="block text-sm font-medium text-gray-300 mb-2">Server</label>
                         <input 
@@ -128,36 +132,36 @@
                             required
                         >
                     </div>
-                    <div>
-                        <label for="baseUrl" class="block text-sm font-medium text-gray-300 mb-2">Base URL</label>
-                        <input 
-                            type="url" 
-                            id="baseUrl" 
-                            name="base_url"
-                            placeholder="Enter base URL"
-                            class="input-field w-full px-4 py-3 rounded-md text-white placeholder-gray-400"
-                            required
-                        >
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                            <label for="modsManifestUrl" class="block text-sm font-medium text-gray-300 mb-2">Mods Manifest URL</label>
+                            <label for="default_base_url" class="block text-sm font-medium text-gray-300 mb-2">Default Base URL</label>
                             <input 
-                                type="text" 
-                                id="modsManifestUrl" 
-                                name="mods_manifest_url"
-                                placeholder="Enter mods manifest URL"
+                                type="url" 
+                                id="default_base_url" 
+                                name="default_base_url"
+                                placeholder="Enter base URL for default version"
                                 class="input-field w-full px-4 py-3 rounded-md text-white placeholder-gray-400"
                                 required
                             >
                         </div>
                         <div>
-                            <label for="rpManifestUrl" class="block text-sm font-medium text-gray-300 mb-2">Resource Pack Manifest URL</label>
+                            <label for="default_mods_manifest_url" class="block text-sm font-medium text-gray-300 mb-2">Default Mods Manifest URL</label>
                             <input 
                                 type="text" 
-                                id="rpManifestUrl" 
-                                name="rp_manifest_url"
-                                placeholder="Enter resource pack manifest URL"
+                                id="default_mods_manifest_url" 
+                                name="default_mods_manifest_url"
+                                placeholder="Enter mods manifest URL for default version"
+                                class="input-field w-full px-4 py-3 rounded-md text-white placeholder-gray-400"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label for="default_rp_manifest_url" class="block text-sm font-medium text-gray-300 mb-2">Default Resource Pack Manifest URL</label>
+                            <input 
+                                type="text" 
+                                id="default_rp_manifest_url" 
+                                name="default_rp_manifest_url"
+                                placeholder="Enter RP manifest URL for default version"
                                 class="input-field w-full px-4 py-3 rounded-md text-white placeholder-gray-400"
                                 required
                             >
@@ -239,9 +243,8 @@
                     <thead class="bg-black/20">
                         <tr>
                             <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Client ID</th>
-                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Version</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Versions</th>
                             <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Server</th>
-                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Base URL</th>
                             <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Social Media</th>
                             <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Created</th>
                             <th class="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
@@ -276,26 +279,36 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-2">Version</label>
-                        <input type="text" id="edit_version" name="version" class="input-field w-full px-4 py-3 rounded-md text-white" required>
+                        <div class="flex gap-2">
+                            <input type="text" id="edit_version" name="version" class="input-field flex-1 px-4 py-3 rounded-md text-white" required>
+                            <button type="button" onclick="addEditVersionEntry()" class="px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap" title="Add version"><i class="fas fa-plus"></i></button>
+                        </div>
                     </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Default Base URL</label>
+                        <input type="url" id="edit_default_base_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Default Mods Manifest URL</label>
+                        <input type="text" id="edit_default_mods_manifest_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Default RP Manifest URL</label>
+                        <input type="text" id="edit_default_rp_manifest_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2 mt-2">Additional Versions and Manifests</label>
+                    <div id="edit_versions_container" class="space-y-2"></div>
+                    <button type="button" onclick="addEditVersionEntry()" class="mt-2 px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                        <i class="fas fa-plus"></i> Add Version
+                    </button>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">Server</label>
                     <input type="text" id="edit_server" name="server" class="input-field w-full px-4 py-3 rounded-md text-white" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Base URL</label>
-                    <input type="url" id="edit_base_url" name="base_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Mods Manifest URL</label>
-                        <input type="text" id="edit_mods_manifest_url" name="mods_manifest_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Resource Pack Manifest URL</label>
-                        <input type="text" id="edit_rp_manifest_url" name="rp_manifest_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
-                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">Private Key</label>
@@ -316,6 +329,8 @@
     </div>
 
     <script>
+        const API_BASE = 'http://localhost:<%= process.env.PORT || 3000 %>/v2';
+        const API_KEY = '<%= apiKey %>';
         function showCreateAssetModal() {
             document.getElementById('createAssetModal').classList.remove('hidden');
         }
@@ -326,9 +341,9 @@
 
         async function loadAssets() {
             try {
-                const response = await fetch('/v1/admin/assets', {
+                const response = await fetch(`${API_BASE}/admin/assets`, {
                     headers: {
-                        'Authorization': 'Bearer <%= apiKey %>'
+                        'Authorization': `Bearer ${API_KEY}`
                     }
                 });
 
@@ -356,7 +371,10 @@
             }
 
             noAssetsMessage.classList.add('hidden');
-            tbody.innerHTML = assets.map(asset => `
+            tbody.innerHTML = assets.map(asset => {
+                const versions = Array.isArray(asset.version) ? asset.version : (asset.version ? [asset.version] : []);
+                const versionDisplay = versions.join(', ');
+                return `
                 <tr class="hover:bg-black/20 transition-colors">
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center space-x-3">
@@ -365,14 +383,12 @@
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                        v${asset.version}
+                        ${versionDisplay ? 'v' + versionDisplay : ''}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                         ${asset.server}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                        <span class="truncate max-w-xs block" title="${asset.base_url}">${asset.base_url}</span>
-                    </td>
+                    
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                         ${getSocialMediaDisplay(asset.social_media)}
                     </td>
@@ -396,7 +412,7 @@
                         </button>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         function addSocialMediaEntry() {
@@ -432,6 +448,15 @@
             button.closest('.social-media-entry').remove();
         }
 
+        // Merge default and extra versions into a unique array
+        function collectMergedVersions(defaultVersion, extraVersions) {
+            const merged = [];
+            const push = (v) => { if (typeof v === 'string') { const t = v.trim(); if (t) merged.push(t); } };
+            push(defaultVersion);
+            (extraVersions || []).forEach(push);
+            return Array.from(new Set(merged));
+        }
+
         function showEditAssetModal() {
             document.getElementById('editAssetModal').classList.remove('hidden');
         }
@@ -441,8 +466,8 @@
 
         async function openEditAsset(clientId) {
             try {
-                const response = await fetch(`/v1/admin/assets/${encodeURIComponent(clientId)}`, {
-                    headers: { 'Authorization': 'Bearer <%= apiKey %>' }
+                const response = await fetch(`${API_BASE}/admin/assets/${encodeURIComponent(clientId)}`, {
+                    headers: { 'Authorization': `Bearer ${API_KEY}` }
                 });
                 if (!response.ok) {
                     alert('Failed to load asset');
@@ -452,11 +477,17 @@
                 const a = data.asset;
                 document.getElementById('edit_client_id').value = a.client_id;
                 document.getElementById('edit_client_id_display').value = a.client_id;
-                document.getElementById('edit_version').value = a.version || '';
+                // a.version is now an array; first element is default
+                document.getElementById('edit_version').value = (Array.isArray(a.version) && a.version.length ? a.version[0] : (a.version || ''));
                 document.getElementById('edit_server').value = a.server || '';
-                document.getElementById('edit_base_url').value = a.base_url || '';
-                document.getElementById('edit_mods_manifest_url').value = a.mods_manifest_url || '';
-                document.getElementById('edit_rp_manifest_url').value = a.rp_manifest_url || '';
+                // derive defaults from version_configs if present
+                let vc = {};
+                try { vc = a.version_configs || {}; } catch {}
+                const defaultVersion = (Array.isArray(a.version) && a.version.length ? a.version[0] : (a.version || ''));
+                const defaultCfg = vc[defaultVersion] || {};
+                document.getElementById('edit_default_base_url').value = defaultCfg.base_url || a.base_url || '';
+                document.getElementById('edit_default_mods_manifest_url').value = defaultCfg.mods_manifest_url || a.mods_manifest_url || '';
+                document.getElementById('edit_default_rp_manifest_url').value = defaultCfg.rp_manifest_url || a.rp_manifest_url || '';
                 document.getElementById('edit_private_key').value = '';
                 try {
                     const sm = a.social_media ? JSON.parse(a.social_media) : {};
@@ -464,6 +495,40 @@
                 } catch {
                     document.getElementById('edit_social_media').value = a.social_media || '{}';
                 }
+                // Inject/edit dynamic version entries for remaining versions
+                let editVersionsContainer = document.getElementById('edit_versions_container');
+                if (!editVersionsContainer) {
+                    const form = document.getElementById('editAssetForm');
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = `
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Additional Versions</label>
+                            <div id="edit_versions_container" class="space-y-2"></div>
+                            <button type="button" onclick="addEditVersionEntry()" class="mt-2 px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                                <i class="fas fa-plus"></i> Add Version
+                            </button>
+                        </div>
+                    `;
+                    form.insertBefore(wrapper, form.querySelector('.flex.justify-end'));
+                    editVersionsContainer = document.getElementById('edit_versions_container');
+                }
+                editVersionsContainer.innerHTML = '';
+                const remaining = (Array.isArray(a.version) ? a.version.slice(1) : []);
+                remaining.forEach(v => {
+                    const el = document.createElement('div');
+                    el.className = 'grid grid-cols-1 md:grid-cols-4 gap-3 version-entry';
+                    const cfg = (vc && vc[v]) || {};
+                    el.innerHTML = `
+                        <input type="text" name="edit_version[]" value="${v}" class="input-field px-4 py-3 rounded-md text-white placeholder-gray-400">
+                        <input type="url" name="edit_base_url[]" value="${cfg.base_url || ''}" placeholder="Base URL" class="input-field px-4 py-3 rounded-md text-white placeholder-gray-400">
+                        <input type="text" name="edit_mods_manifest_url[]" value="${cfg.mods_manifest_url || ''}" placeholder="Mods manifest URL" class="input-field px-4 py-3 rounded-md text-white placeholder-gray-400">
+                        <div class="flex gap-2">
+                          <input type="text" name="edit_rp_manifest_url[]" value="${cfg.rp_manifest_url || ''}" placeholder="RP manifest URL" class="input-field flex-1 px-4 py-3 rounded-md text-white placeholder-gray-400">
+                          <button type="button" onclick="removeVersionEntry(this)" class="px-3 py-3 text-red-400 hover:text-red-300 transition-colors" title="Remove"><i class="fas fa-trash"></i></button>
+                        </div>
+                    `;
+                    editVersionsContainer.appendChild(el);
+                });
                 showEditAssetModal();
             } catch (e) {
                 console.error('Error loading asset', e);
@@ -475,12 +540,41 @@
             e.preventDefault();
             const clientId = (document.getElementById('edit_client_id').value || '').trim();
             const updates = {
-                version: (document.getElementById('edit_version').value || '').trim(),
+                version: collectMergedVersions(
+                    (document.getElementById('edit_version').value || '').trim(),
+                    Array.from(document.querySelectorAll('input[name="edit_version[]"]')).map((i) => i.value)
+                ),
                 server: (document.getElementById('edit_server').value || '').trim(),
-                base_url: (document.getElementById('edit_base_url').value || '').trim(),
-                mods_manifest_url: (document.getElementById('edit_mods_manifest_url').value || '').trim(),
-                rp_manifest_url: (document.getElementById('edit_rp_manifest_url').value || '').trim(),
             };
+            // Build version_configs
+            const defaultVersion = (document.getElementById('edit_version').value || '').trim();
+            const vc = {};
+            const defBase = (document.getElementById('edit_default_base_url').value || '').trim();
+            const defMods = (document.getElementById('edit_default_mods_manifest_url').value || '').trim();
+            const defRp = (document.getElementById('edit_default_rp_manifest_url').value || '').trim();
+            if (defaultVersion && defBase && defMods && defRp) {
+                vc[defaultVersion] = { base_url: defBase, mods_manifest_url: defMods, rp_manifest_url: defRp };
+            }
+            const versionInputs = Array.from(document.querySelectorAll('input[name="edit_version[]"]'));
+            const baseInputs = Array.from(document.querySelectorAll('input[name="edit_base_url[]"]'));
+            const modsInputs = Array.from(document.querySelectorAll('input[name="edit_mods_manifest_url[]"]'));
+            const rpInputs = Array.from(document.querySelectorAll('input[name="edit_rp_manifest_url[]"]'));
+            for (let i = 0; i < versionInputs.length; i++) {
+                const v = (((versionInputs[i] || {})['value']) || '').trim();
+                const b = (((baseInputs[i] || {})['value']) || '').trim();
+                const m = (((modsInputs[i] || {})['value']) || '').trim();
+                const r = (((rpInputs[i] || {})['value']) || '').trim();
+                if (v && b && m && r) {
+                    vc[v] = { base_url: b, mods_manifest_url: m, rp_manifest_url: r };
+                }
+            }
+            if (Object.keys(vc).length > 0) {
+                updates.version_configs = vc;
+                // Also set top-level fallbacks from default
+                updates.base_url = defBase;
+                updates.mods_manifest_url = defMods;
+                updates.rp_manifest_url = defRp;
+            }
             const pk = (document.getElementById('edit_private_key').value || '').trim();
             if (pk) updates['private_key'] = pk;
             const smText = (document.getElementById('edit_social_media').value || '').trim();
@@ -493,12 +587,22 @@
                     return;
                 }
             }
+            const verText = (document.getElementById('edit_versions')?.value || '').trim();
+            if (verText) {
+                try {
+                    const vv = JSON.parse(verText);
+                    if (Array.isArray(vv)) updates['versions'] = vv;
+                } catch (e) {
+                    alert('Versions must be valid JSON array');
+                    return;
+                }
+            }
 
             try {
-                const response = await fetch(`/v1/admin/assets/${encodeURIComponent(clientId)}`, {
+                const response = await fetch(`${API_BASE}/admin/assets/${encodeURIComponent(clientId)}`, {
                     method: 'PUT',
                     headers: {
-                        'Authorization': 'Bearer <%= apiKey %>',
+                        'Authorization': `Bearer ${API_KEY}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(updates)
@@ -533,6 +637,38 @@
             }
         }
 
+        function addVersionEntry() {
+            const container = document.getElementById('versionsContainer');
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-1 md:grid-cols-4 gap-3 version-entry';
+            row.innerHTML = `
+                <input type="text" name="version[]" placeholder="Version (e.g., 1.20.1-forge)" class="input-field px-4 py-3 rounded-md text-white placeholder-gray-400">
+                <input type="url" name="base_url[]" placeholder="Base URL" class="input-field px-4 py-3 rounded-md text-white placeholder-gray-400">
+                <input type="text" name="mods_manifest_url[]" placeholder="Mods manifest URL" class="input-field px-4 py-3 rounded-md text-white placeholder-gray-400">
+                <div class="flex gap-2">
+                  <input type="text" name="rp_manifest_url[]" placeholder="RP manifest URL" class="input-field flex-1 px-4 py-3 rounded-md text-white placeholder-gray-400">
+                  <button type="button" onclick="this.closest('.version-entry').remove()" class="px-3 py-3 text-red-400 hover:text-red-300 transition-colors" title="Remove"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
+        function addEditVersionEntry() {
+            const container = document.getElementById('edit_versions_container');
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-1 md:grid-cols-4 gap-3 version-entry';
+            row.innerHTML = `
+                <input type="text" name="edit_version[]" placeholder="Version" class="input-field px-4 py-3 rounded-md text-white placeholder-gray-400">
+                <input type="url" name="edit_base_url[]" placeholder="Base URL" class="input-field px-4 py-3 rounded-md text-white placeholder-gray-400">
+                <input type="text" name="edit_mods_manifest_url[]" placeholder="Mods manifest URL" class="input-field px-4 py-3 rounded-md text-white placeholder-gray-400">
+                <div class="flex gap-2">
+                  <input type="text" name="edit_rp_manifest_url[]" placeholder="RP manifest URL" class="input-field flex-1 px-4 py-3 rounded-md text-white placeholder-gray-400">
+                  <button type="button" onclick="this.closest('.version-entry').remove()" class="px-3 py-3 text-red-400 hover:text-red-300 transition-colors" title="Remove"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
         async function createAsset(event) {
             event.preventDefault();
             
@@ -552,19 +688,46 @@
             }
             
             try {
-                const response = await fetch('/v1/admin/assets', {
+                // Build version_configs
+                const defaultVersion = (formData.get('version') || '').toString();
+                const vc = {};
+                const defBase = (document.getElementById('default_base_url').value || '').trim();
+                const defMods = (document.getElementById('default_mods_manifest_url').value || '').trim();
+                const defRp = (document.getElementById('default_rp_manifest_url').value || '').trim();
+                if (defaultVersion && defBase && defMods && defRp) {
+                    vc[defaultVersion] = { base_url: defBase, mods_manifest_url: defMods, rp_manifest_url: defRp };
+                }
+                const extraVersions = Array.from(formData.getAll('version[]')).map(v => (v || '').toString());
+                const extraBases = Array.from(formData.getAll('base_url[]')).map(v => (v || '').toString());
+                const extraMods = Array.from(formData.getAll('mods_manifest_url[]')).map(v => (v || '').toString());
+                const extraRps = Array.from(formData.getAll('rp_manifest_url[]')).map(v => (v || '').toString());
+                for (let i = 0; i < extraVersions.length; i++) {
+                    const v = (extraVersions[i] || '').trim();
+                    const b = (extraBases[i] || '').trim();
+                    const m = (extraMods[i] || '').trim();
+                    const r = (extraRps[i] || '').trim();
+                    if (v && b && m && r) {
+                        vc[v] = { base_url: b, mods_manifest_url: m, rp_manifest_url: r };
+                    }
+                }
+
+                const response = await fetch(`${API_BASE}/admin/assets`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer <%= apiKey %>'
+                        'Authorization': `Bearer ${API_KEY}`
                     },
                     body: JSON.stringify({
                         client_id: formData.get('client_id'),
-                        version: formData.get('version'),
+                        version: collectMergedVersions(
+                            (formData.get('version') || '').toString(),
+                            Array.from(formData.getAll('version[]')).map(v => (v || '').toString())
+                        ),
                         server: formData.get('server'),
-                        base_url: formData.get('base_url'),
-                        mods_manifest_url: formData.get('mods_manifest_url'),
-                        rp_manifest_url: formData.get('rp_manifest_url'),
+                        base_url: defBase,
+                        mods_manifest_url: defMods,
+                        rp_manifest_url: defRp,
+                        version_configs: Object.keys(vc).length > 0 ? vc : undefined,
                         private_key: formData.get('private_key'),
                         social_media: Object.keys(socialMedia).length > 0 ? socialMedia : null
                     })
@@ -616,10 +779,10 @@
             }
             
             try {
-                const response = await fetch(`/v1/admin/assets/${clientId}`, {
+                const response = await fetch(`${API_BASE}/admin/assets/${clientId}`, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': 'Bearer <%= apiKey %>'
+                        'Authorization': `Bearer ${API_KEY}`
                     }
                 });
 

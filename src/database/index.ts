@@ -13,6 +13,7 @@ async function migrateDatabase(db: Database): Promise<void> {
         // Check if client_id column exists in launcher_assets table
         const tableInfo = await db.all("PRAGMA table_info(launcher_assets)");
         const hasClientId = tableInfo.some((col: any) => col.name === 'client_id');
+        const hasVersionConfigs = tableInfo.some((col: any) => col.name === 'version_configs');
         
         if (!hasClientId) {
             console.log('Migrating database schema...');
@@ -34,6 +35,7 @@ async function migrateDatabase(db: Database): Promise<void> {
                         base_url TEXT NOT NULL,
                         mods_manifest_url TEXT NOT NULL,
                         rp_manifest_url TEXT NOT NULL,
+                        version_configs TEXT,
                         private_key TEXT NOT NULL,
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -42,7 +44,7 @@ async function migrateDatabase(db: Database): Promise<void> {
                 
                 // Copy existing data with default values for new columns
                 await db.exec(`
-                    INSERT INTO launcher_assets_new (id, client_id, version, server, base_url, mods_manifest_url, rp_manifest_url, private_key, created_at, updated_at)
+                    INSERT INTO launcher_assets_new (id, client_id, version, server, base_url, mods_manifest_url, rp_manifest_url, version_configs, private_key, created_at, updated_at)
                     SELECT 
                         id, 
                         'legacy_' || id as client_id, 
@@ -51,6 +53,7 @@ async function migrateDatabase(db: Database): Promise<void> {
                         base_url, 
                         'mods_manifest.json' as mods_manifest_url, 
                         'rp_manifest.json' as rp_manifest_url, 
+                        NULL as version_configs,
                         '-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg...\n-----END PRIVATE KEY-----' as private_key,
                         created_at, 
                         updated_at
@@ -74,6 +77,7 @@ async function migrateDatabase(db: Database): Promise<void> {
                         base_url TEXT NOT NULL,
                         mods_manifest_url TEXT NOT NULL,
                         rp_manifest_url TEXT NOT NULL,
+                        version_configs TEXT,
                         private_key TEXT NOT NULL,
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -82,6 +86,11 @@ async function migrateDatabase(db: Database): Promise<void> {
             }
             
             console.log('Database migration completed successfully');
+        }
+        // Add version_configs column if missing
+        if (hasClientId && !hasVersionConfigs) {
+            console.log('Adding version_configs column to launcher_assets...');
+            await db.exec(`ALTER TABLE launcher_assets ADD COLUMN version_configs TEXT`);
         }
     } catch (error) {
         console.error('Error during database migration:', error);
