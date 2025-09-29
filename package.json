@@ -1,6 +1,6 @@
 {
   "name": "codectivity-mccore-webapi",
-  "version": "1.0.0",
+  "version": "2.0.0-rc.2",
   "description": "The Web API for the Codectivity MCCore infrastructure.",
   "main": "dist/server.js",
   "scripts": {

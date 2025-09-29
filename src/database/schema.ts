@@ -17,6 +17,9 @@ export interface LauncherAsset {
     version_configs?: string; // JSON object keyed by version => { base_url, mods_manifest_url, rp_manifest_url }
     private_key: string; // Private key for signing manifests
     social_media: string; // JSON string of social media links
+    // New fields for custom client JSON support
+    source?: string; // 'standard' (default) or 'custom'
+    custom_json?: string; // Raw JSON string to return when source is 'custom'
     created_at: string;
     updated_at: string;
 }
@@ -105,6 +108,8 @@ export async function initializeTables(db: Database): Promise<void> {
                 version_configs TEXT,
                 private_key TEXT NOT NULL,
                 social_media TEXT DEFAULT '{}',
+                source TEXT NOT NULL DEFAULT 'standard',
+                custom_json TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
@@ -340,6 +345,26 @@ export async function initializeTables(db: Database): Promise<void> {
         } catch (error) {
             // Column might already exist, ignore error
             console.log('versions column might already exist or table is new');
+        }
+
+        // Add source column to existing launcher_assets table if it doesn't exist
+        try {
+            await db.exec(`
+                ALTER TABLE launcher_assets 
+                ADD COLUMN source TEXT NOT NULL DEFAULT 'standard'
+            `);
+        } catch (error) {
+            console.log('source column might already exist or table is new');
+        }
+
+        // Add custom_json column to existing launcher_assets table if it doesn't exist
+        try {
+            await db.exec(`
+                ALTER TABLE launcher_assets 
+                ADD COLUMN custom_json TEXT
+            `);
+        } catch (error) {
+            console.log('custom_json column might already exist or table is new');
         }
 
         console.log('Database tables initialized successfully');

@@ -105,7 +105,7 @@
                                 required
                             >
                         </div>
-                        <div>
+                        <div data-create-standard>
                             <label for="version" class="block text-sm font-medium text-gray-300 mb-2">Default Version</label>
                             <div class="flex gap-2">
                                 <input 
@@ -114,13 +114,25 @@
                                     name="version"
                                     placeholder="e.g., 1.20.1-forge"
                                     class="input-field flex-1 px-4 py-3 rounded-md text-white placeholder-gray-400"
-                                    required
                                 >
-                                <button type="button" onclick="addVersionEntry()" class="px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap" title="Add version"><i class="fas fa-plus"></i></button>
+                                <button type="button" data-create-standard onclick="addVersionEntry()" class="px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap" title="Add version"><i class="fas fa-plus"></i></button>
                             </div>
                         </div>
                     </div>
-                    <div id="versionsContainer" class="space-y-2 mt-2"></div>
+                    <div class="mt-2">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Mode</label>
+                        <div class="flex items-center gap-4">
+                            <label class="inline-flex items-center gap-2">
+                                <input type="radio" name="source" value="standard" checked onchange="toggleCreateMode()">
+                                <span>Standard</span>
+                            </label>
+                            <label class="inline-flex items-center gap-2">
+                                <input type="radio" name="source" value="custom" onchange="toggleCreateMode()">
+                                <span>Custom JSON</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="versionsContainer" data-create-standard class="space-y-2 mt-2"></div>
                     <div>
                         <label for="server" class="block text-sm font-medium text-gray-300 mb-2">Server</label>
                         <input 
@@ -132,7 +144,7 @@
                             required
                         >
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" data-create-standard>
                         <div>
                             <label for="default_base_url" class="block text-sm font-medium text-gray-300 mb-2">Default Base URL</label>
                             <input 
@@ -166,6 +178,21 @@
                                 required
                             >
                         </div>
+                    </div>
+                    <div data-create-custom class="hidden">
+                        <label for="create_custom_json" class="block text-sm font-medium text-gray-300 mb-2">Custom JSON</label>
+                        <textarea id="create_custom_json" name="custom_json" rows="20" class="input-field w-full px-4 py-3 rounded-md text-white font-mono text-sm" placeholder='{
+  "id": "1.20.1-custom",
+  "type": "release",
+  "inheritsFrom": "1.20.1",
+  "time": "2025-01-01T00:00:00Z",
+  "releaseTime": "2025-01-01T00:00:00Z",
+  "mainClass": "net.minecraft.client.main.Main",
+  "arguments": { "game": [] },
+  "downloads": {},
+  "libraries": []
+}'></textarea>
+                        <p class="text-xs text-gray-500 mt-2">When enabled, base and additional version options are ignored; this JSON will be served for the client.</p>
                     </div>
                     <div>
                         <label for="privateKey" class="block text-sm font-medium text-gray-300 mb-2">Private Key</label>
@@ -272,40 +299,40 @@
             </div>
             <form id="editAssetForm" class="space-y-6">
                 <input type="hidden" id="edit_client_id" name="client_id">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div id="editFormGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-2">Client ID</label>
                         <input type="text" id="edit_client_id_display" class="input-field w-full px-4 py-3 rounded-md text-white" disabled>
                     </div>
-                    <div>
+                    <div data-edit-standard>
                         <label class="block text-sm font-medium text-gray-300 mb-2">Version</label>
                         <div class="flex gap-2">
-                            <input type="text" id="edit_version" name="version" class="input-field flex-1 px-4 py-3 rounded-md text-white" required>
+                            <input type="text" id="edit_version" name="version" class="input-field flex-1 px-4 py-3 rounded-md text-white">
                             <button type="button" onclick="addEditVersionEntry()" class="px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors whitespace-nowrap" title="Add version"><i class="fas fa-plus"></i></button>
                         </div>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-2">
-                    <div>
+                    <div data-edit-standard>
                         <label class="block text-sm font-medium text-gray-300 mb-2">Default Base URL</label>
                         <input type="url" id="edit_default_base_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
                     </div>
-                    <div>
+                    <div data-edit-standard>
                         <label class="block text-sm font-medium text-gray-300 mb-2">Default Mods Manifest URL</label>
                         <input type="text" id="edit_default_mods_manifest_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
                     </div>
-                    <div>
+                    <div data-edit-standard>
                         <label class="block text-sm font-medium text-gray-300 mb-2">Default RP Manifest URL</label>
                         <input type="text" id="edit_default_rp_manifest_url" class="input-field w-full px-4 py-3 rounded-md text-white" required>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2 mt-2">Additional Versions and Manifests</label>
-                    <div id="edit_versions_container" class="space-y-2"></div>
-                    <button type="button" onclick="addEditVersionEntry()" class="mt-2 px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                        <i class="fas fa-plus"></i> Add Version
-                    </button>
-                </div>
+                    <div data-edit-standard>
+                        <label class="block text-sm font-medium text-gray-300 mb-2 mt-2">Additional Versions and Manifests</label>
+                        <div id="edit_versions_container" class="space-y-2"></div>
+                        <button type="button" onclick="addEditVersionEntry()" class="mt-2 px-4 py-2 text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                            <i class="fas fa-plus"></i> Add Version
+                        </button>
+                    </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-2">Server</label>
                     <input type="text" id="edit_server" name="server" class="input-field w-full px-4 py-3 rounded-md text-white" required>
@@ -383,7 +410,7 @@
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                        ${versionDisplay ? 'v' + versionDisplay : ''}
+                        ${asset.source === 'custom' ? '<span class="text-yellow-400">custom</span>' : (versionDisplay ? 'v' + versionDisplay : '')}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                         ${asset.server}
@@ -475,6 +502,30 @@
                 }
                 const data = await response.json();
                 const a = data.asset;
+                // insert mode toggle if not present
+                if (!document.querySelector('input[name="edit_source"]')) {
+                    const container = document.getElementById('editFormGrid');
+                    if (container) {
+                        const col = document.createElement('div');
+                        col.innerHTML = `
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Mode</label>
+                            <div class="flex items-center gap-4">
+                                <label class="inline-flex items-center gap-2">
+                                    <input type="radio" name="edit_source" value="standard" onchange="toggleEditMode()">
+                                    <span>Standard</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2">
+                                    <input type="radio" name="edit_source" value="custom" onchange="toggleEditMode()">
+                                    <span>Custom JSON</span>
+                                </label>
+                            </div>
+                        `;
+                        container.appendChild(col);
+                    }
+                }
+                const isCustom = a.source === 'custom';
+                const radios = document.querySelectorAll('input[name="edit_source"]');
+                radios.forEach(function(r) { if (r instanceof HTMLInputElement) { r.checked = (r.value === (isCustom ? 'custom' : 'standard')); } });
                 document.getElementById('edit_client_id').value = a.client_id;
                 document.getElementById('edit_client_id_display').value = a.client_id;
                 // a.version is now an array; first element is default
@@ -529,6 +580,35 @@
                     `;
                     editVersionsContainer.appendChild(el);
                 });
+                // ensure custom json textarea exists
+                if (!document.getElementById('edit_custom_json')) {
+                    const form = document.getElementById('editAssetForm');
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = `
+                        <div data-edit-custom class="hidden">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Custom JSON</label>
+                            <textarea id="edit_custom_json" name="custom_json" rows="20" class="input-field w-full px-4 py-3 rounded-md text-white font-mono text-sm" placeholder='{
+  "id": "1.20.1-custom",
+  "type": "release",
+  "inheritsFrom": "1.20.1",
+  "time": "2025-01-01T00:00:00Z",
+  "releaseTime": "2025-01-01T00:00:00Z",
+  "mainClass": "net.minecraft.client.main.Main",
+  "arguments": { "game": [] },
+  "downloads": {},
+  "libraries": []
+}'></textarea>
+                        </div>
+                    `;
+                    form.insertBefore(wrapper, form.querySelector('.flex.justify-end'));
+                }
+                try {
+                    var cjEl = document.getElementById('edit_custom_json');
+                    if (cjEl && cjEl instanceof HTMLTextAreaElement) {
+                        cjEl.value = a.custom_json ? (typeof a.custom_json === 'string' ? a.custom_json : JSON.stringify(a.custom_json, null, 2)) : '';
+                    }
+                } catch {}
+                toggleEditMode();
                 showEditAssetModal();
             } catch (e) {
                 console.error('Error loading asset', e);
@@ -546,29 +626,47 @@
                 ),
                 server: (document.getElementById('edit_server').value || '').trim(),
             };
+            const editSourceInput = document.querySelector('input[name="edit_source"]:checked');
+            const editSource = (editSourceInput && editSourceInput instanceof HTMLInputElement) ? editSourceInput.value : 'standard';
+            updates.source = editSource;
+            if (editSource === 'custom') {
+                var cjVal = '';
+                var cjEl2 = document.getElementById('edit_custom_json');
+                if (cjEl2 && cjEl2 instanceof HTMLTextAreaElement) cjVal = (cjEl2.value || '').trim();
+                const cj = cjVal;
+                if (!cj) { alert('Custom JSON is required in custom mode'); return; }
+                updates.custom_json = cj;
+                // In custom mode, ignore version fields
+                delete updates.version_configs;
+                delete updates.base_url;
+                delete updates.mods_manifest_url;
+                delete updates.rp_manifest_url;
+            }
             // Build version_configs
             const defaultVersion = (document.getElementById('edit_version').value || '').trim();
             const vc = {};
             const defBase = (document.getElementById('edit_default_base_url').value || '').trim();
             const defMods = (document.getElementById('edit_default_mods_manifest_url').value || '').trim();
             const defRp = (document.getElementById('edit_default_rp_manifest_url').value || '').trim();
-            if (defaultVersion && defBase && defMods && defRp) {
+            if (editSource !== 'custom' && defaultVersion && defBase && defMods && defRp) {
                 vc[defaultVersion] = { base_url: defBase, mods_manifest_url: defMods, rp_manifest_url: defRp };
             }
-            const versionInputs = Array.from(document.querySelectorAll('input[name="edit_version[]"]'));
-            const baseInputs = Array.from(document.querySelectorAll('input[name="edit_base_url[]"]'));
-            const modsInputs = Array.from(document.querySelectorAll('input[name="edit_mods_manifest_url[]"]'));
-            const rpInputs = Array.from(document.querySelectorAll('input[name="edit_rp_manifest_url[]"]'));
-            for (let i = 0; i < versionInputs.length; i++) {
-                const v = (((versionInputs[i] || {})['value']) || '').trim();
-                const b = (((baseInputs[i] || {})['value']) || '').trim();
-                const m = (((modsInputs[i] || {})['value']) || '').trim();
-                const r = (((rpInputs[i] || {})['value']) || '').trim();
-                if (v && b && m && r) {
-                    vc[v] = { base_url: b, mods_manifest_url: m, rp_manifest_url: r };
+            if (editSource !== 'custom') {
+                const versionInputs = Array.from(document.querySelectorAll('input[name="edit_version[]"]'));
+                const baseInputs = Array.from(document.querySelectorAll('input[name="edit_base_url[]"]'));
+                const modsInputs = Array.from(document.querySelectorAll('input[name="edit_mods_manifest_url[]"]'));
+                const rpInputs = Array.from(document.querySelectorAll('input[name="edit_rp_manifest_url[]"]'));
+                for (let i = 0; i < versionInputs.length; i++) {
+                    const v = (((versionInputs[i] || {})['value']) || '').trim();
+                    const b = (((baseInputs[i] || {})['value']) || '').trim();
+                    const m = (((modsInputs[i] || {})['value']) || '').trim();
+                    const r = (((rpInputs[i] || {})['value']) || '').trim();
+                    if (v && b && m && r) {
+                        vc[v] = { base_url: b, mods_manifest_url: m, rp_manifest_url: r };
+                    }
                 }
             }
-            if (Object.keys(vc).length > 0) {
+            if (editSource !== 'custom' && Object.keys(vc).length > 0) {
                 updates.version_configs = vc;
                 // Also set top-level fallbacks from default
                 updates.base_url = defBase;
@@ -673,6 +771,7 @@
             event.preventDefault();
             
             const formData = new FormData(event.target);
+            const source = (formData.get('source') || 'standard').toString();
             
             // Build social media object from form data
             const socialMedia = {};
@@ -694,20 +793,22 @@
                 const defBase = (document.getElementById('default_base_url').value || '').trim();
                 const defMods = (document.getElementById('default_mods_manifest_url').value || '').trim();
                 const defRp = (document.getElementById('default_rp_manifest_url').value || '').trim();
-                if (defaultVersion && defBase && defMods && defRp) {
-                    vc[defaultVersion] = { base_url: defBase, mods_manifest_url: defMods, rp_manifest_url: defRp };
-                }
-                const extraVersions = Array.from(formData.getAll('version[]')).map(v => (v || '').toString());
-                const extraBases = Array.from(formData.getAll('base_url[]')).map(v => (v || '').toString());
-                const extraMods = Array.from(formData.getAll('mods_manifest_url[]')).map(v => (v || '').toString());
-                const extraRps = Array.from(formData.getAll('rp_manifest_url[]')).map(v => (v || '').toString());
-                for (let i = 0; i < extraVersions.length; i++) {
-                    const v = (extraVersions[i] || '').trim();
-                    const b = (extraBases[i] || '').trim();
-                    const m = (extraMods[i] || '').trim();
-                    const r = (extraRps[i] || '').trim();
-                    if (v && b && m && r) {
-                        vc[v] = { base_url: b, mods_manifest_url: m, rp_manifest_url: r };
+                if (source === 'standard') {
+                    if (defaultVersion && defBase && defMods && defRp) {
+                        vc[defaultVersion] = { base_url: defBase, mods_manifest_url: defMods, rp_manifest_url: defRp };
+                    }
+                    const extraVersions = Array.from(formData.getAll('version[]')).map(v => (v || '').toString());
+                    const extraBases = Array.from(formData.getAll('base_url[]')).map(v => (v || '').toString());
+                    const extraMods = Array.from(formData.getAll('mods_manifest_url[]')).map(v => (v || '').toString());
+                    const extraRps = Array.from(formData.getAll('rp_manifest_url[]')).map(v => (v || '').toString());
+                    for (let i = 0; i < extraVersions.length; i++) {
+                        const v = (extraVersions[i] || '').trim();
+                        const b = (extraBases[i] || '').trim();
+                        const m = (extraMods[i] || '').trim();
+                        const r = (extraRps[i] || '').trim();
+                        if (v && b && m && r) {
+                            vc[v] = { base_url: b, mods_manifest_url: m, rp_manifest_url: r };
+                        }
                     }
                 }
 
@@ -719,17 +820,19 @@
                     },
                     body: JSON.stringify({
                         client_id: formData.get('client_id'),
-                        version: collectMergedVersions(
+                        version: source === 'standard' ? collectMergedVersions(
                             (formData.get('version') || '').toString(),
                             Array.from(formData.getAll('version[]')).map(v => (v || '').toString())
-                        ),
+                        ) : (formData.get('version') || '').toString(),
                         server: formData.get('server'),
-                        base_url: defBase,
-                        mods_manifest_url: defMods,
-                        rp_manifest_url: defRp,
-                        version_configs: Object.keys(vc).length > 0 ? vc : undefined,
+                        base_url: source === 'standard' ? defBase : undefined,
+                        mods_manifest_url: source === 'standard' ? defMods : undefined,
+                        rp_manifest_url: source === 'standard' ? defRp : undefined,
+                        version_configs: source === 'standard' && Object.keys(vc).length > 0 ? vc : undefined,
                         private_key: formData.get('private_key'),
-                        social_media: Object.keys(socialMedia).length > 0 ? socialMedia : null
+                        social_media: Object.keys(socialMedia).length > 0 ? socialMedia : null,
+                        source,
+                        custom_json: source === 'custom' ? (document.getElementById('create_custom_json').value || '').trim() : undefined
                     })
                 });
 
@@ -803,6 +906,32 @@
             loadAssets();
             document.getElementById('createAssetForm').addEventListener('submit', createAsset);
         });
+        function toggleCreateMode() {
+            var selected = document.querySelector('input[name="source"]:checked');
+            var mode = (selected && selected instanceof HTMLInputElement) ? selected.value : 'standard';
+            var stdEls = document.querySelectorAll('[data-create-standard]');
+            var custEl = document.querySelector('[data-create-custom]');
+            stdEls.forEach(function(el){ el.classList.toggle('hidden', mode === 'custom'); });
+            if (custEl) custEl.classList.toggle('hidden', mode !== 'custom');
+            var versionInput = document.getElementById('version');
+            if (versionInput && versionInput instanceof HTMLInputElement) {
+                versionInput.required = (mode !== 'custom');
+                versionInput.disabled = (mode === 'custom');
+            }
+        }
+        function toggleEditMode() {
+            var selected = document.querySelector('input[name="edit_source"]:checked');
+            var mode = (selected && selected instanceof HTMLInputElement) ? selected.value : 'standard';
+            var stdLabels = document.querySelectorAll('#editAssetForm [data-edit-standard]');
+            stdLabels.forEach(function(el){ el.classList.toggle('hidden', mode === 'custom'); });
+            var custEl = document.querySelector('[data-edit-custom]');
+            if (custEl) custEl.classList.toggle('hidden', mode !== 'custom');
+            var editVersion = document.getElementById('edit_version');
+            if (editVersion && editVersion instanceof HTMLInputElement) {
+                editVersion.required = (mode !== 'custom');
+                editVersion.disabled = (mode === 'custom');
+            }
+        }
     </script>
 </body>
 </html> 

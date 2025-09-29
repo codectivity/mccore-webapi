@@ -99,6 +99,28 @@ publicRouter.post('/assets/launcher', async (req: Request, res: Response, _next:
       return;
     }
     
+    // If custom source, return stored custom JSON wrapped in versionInfo (served over launcher assets API)
+    if (((asset as any).source || 'standard') === 'custom') {
+      try {
+        const customJsonRaw = (asset as any).custom_json || '{}';
+        const custom = typeof customJsonRaw === 'string' ? JSON.parse(customJsonRaw) : customJsonRaw;
+        // Ensure minimal compatibility: include server and social_media if missing
+        let socialMedia = {};
+        try { if (asset.social_media) socialMedia = JSON.parse(asset.social_media); } catch {}
+        const responseBody = {
+          versionInfo: custom,
+          server: asset.server,
+          social_media: socialMedia
+        };
+        res.json(responseBody);
+        return;
+      } catch (e) {
+        console.error('Invalid custom JSON for client', client_id, e);
+        res.status(500).json({ error: 'Internal Server Error', message: 'Invalid custom client JSON' });
+        return;
+      }
+    }
+
     // Decide which base and manifest URLs to use per requested version (if provided) or default
     const requestedVersion = (req.body?.version as string | undefined) || undefined;
     let baseUrl = asset.base_url;
@@ -134,18 +156,20 @@ publicRouter.post('/assets/launcher', async (req: Request, res: Response, _next:
     // Compute versions array (multi-version support)
     const versionsArray = formatVersionsForApi((asset as any).versions || '[]');
 
-    // Return launcher asset with single version field as an array (merged)
+    // Return launcher asset grouped under versionInfo, with metadata at top-level
     res.json({
-      base: baseUrl,
-      mods: {
-        files: modsData.files,
-        signature: modsData.signature
+      versionInfo: {
+        base: baseUrl,
+        mods: {
+          files: modsData.files,
+          signature: modsData.signature
+        },
+        rp: {
+          files: rpData.files,
+          signature: rpData.signature
+        },
+        version: versionsArray.length > 0 ? versionsArray : [asset.version]
       },
-      rp: {
-        files: rpData.files,
-        signature: rpData.signature
-      },
-      version: versionsArray.length > 0 ? versionsArray : [asset.version],
       server: asset.server,
       social_media: socialMedia
     });

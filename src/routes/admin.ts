@@ -124,12 +124,12 @@ adminRouter.delete('/keys/:keyHash', async (req: Request, res: Response) => {
 adminRouter.post('/assets', async (req: Request, res: Response) => {
     try {
         const { client_id } = req.body;
-        let { version, versions, server, base_url, mods_manifest_url, rp_manifest_url, version_configs, private_key, social_media } = req.body as any;
+        let { version, versions, server, base_url, mods_manifest_url, rp_manifest_url, version_configs, private_key, social_media, source, custom_json } = req.body as any;
         
-        if (!client_id || !version || !server || !private_key) {
+        if (!client_id || (!version && (source || 'standard') !== 'custom') || !server || !private_key) {
             res.status(400).json({ 
                 error: 'Bad Request', 
-                message: 'client_id, version, server, and private_key are required' 
+                message: 'client_id, version, server, and private_key are required (version may be inferred from custom_json.id when source is custom)' 
             });
             return;
         }
@@ -157,7 +157,22 @@ adminRouter.post('/assets', async (req: Request, res: Response) => {
         }
         // De-duplicate while preserving order
         versionsArray = Array.from(new Set(versionsArray));
-        const defaultVersion = versionsArray[0] || (typeof version === 'string' ? version : '');
+        let defaultVersion = versionsArray[0] || (typeof version === 'string' ? version : '');
+
+        // If source is custom and no version was provided, try to infer from custom_json.id
+        if ((source || 'standard') === 'custom' && !defaultVersion) {
+            try {
+                const cjObj = typeof custom_json === 'string' ? JSON.parse(custom_json) : (custom_json || {});
+                if (cjObj && typeof cjObj.id === 'string' && cjObj.id.trim()) {
+                    defaultVersion = cjObj.id.trim();
+                    versionsArray = [defaultVersion];
+                }
+            } catch {}
+            if (!defaultVersion) {
+                defaultVersion = 'custom-client';
+                versionsArray = [defaultVersion];
+            }
+        }
         const normalizedVersions = versionsArray.length > 0 ? JSON.stringify(versionsArray) : undefined;
 
         // Handle version_configs: accept object or JSON string
@@ -178,12 +193,27 @@ adminRouter.post('/assets', async (req: Request, res: Response) => {
         }
 
         // Validate we have some URL sources (either top-level or per-version default)
-        if (!base_url || !mods_manifest_url || !rp_manifest_url) {
+        if ((!base_url || !mods_manifest_url || !rp_manifest_url) && (source || 'standard') !== 'custom') {
             res.status(400).json({
                 error: 'Bad Request',
                 message: 'base_url, mods_manifest_url, and rp_manifest_url are required (provide under version_configs for the default version or as top-level)'
             });
             return;
+        }
+        // If custom source, validate custom_json
+        if ((source || 'standard') === 'custom') {
+            try {
+                if (typeof custom_json === 'string') {
+                    JSON.parse(custom_json);
+                } else if (typeof custom_json === 'object' && custom_json !== null) {
+                    // ok
+                } else {
+                    throw new Error('custom_json must be object or JSON string');
+                }
+            } catch (e) {
+                res.status(400).json({ error: 'Bad Request', message: 'custom_json must be valid JSON when source is custom' });
+                return;
+            }
         }
         const asset = await createLauncherAsset(db, {
             client_id,
@@ -195,7 +225,9 @@ adminRouter.post('/assets', async (req: Request, res: Response) => {
             rp_manifest_url,
             version_configs: versionConfigsObj ? JSON.stringify(versionConfigsObj) : undefined as any,
             private_key: formattedPrivateKey,
-            social_media: social_media ? JSON.stringify(social_media) : '{}'
+            social_media: social_media ? JSON.stringify(social_media) : '{}',
+            source: (source || 'standard'),
+            custom_json: (source || 'standard') === 'custom' ? (typeof custom_json === 'string' ? custom_json : JSON.stringify(custom_json || {})) : undefined
         });
         
         res.status(201).json({
@@ -210,7 +242,8 @@ adminRouter.post('/assets', async (req: Request, res: Response) => {
                 rp_manifest_url: asset.rp_manifest_url,
                 version_configs: asset.version_configs ? JSON.parse(asset.version_configs as any) : null,
                 social_media: asset.social_media,
-                created_at: asset.created_at
+                created_at: asset.created_at,
+                source: (asset as any).source || 'standard'
             }
         });
     } catch (error) {
@@ -240,7 +273,8 @@ adminRouter.get('/assets', async (_req: Request, res: Response) => {
                 version_configs: asset.version_configs ? JSON.parse(asset.version_configs as any) : null,
                 social_media: asset.social_media,
                 created_at: asset.created_at,
-                updated_at: asset.updated_at
+                updated_at: asset.updated_at,
+                source: (asset as any).source || 'standard'
             }))
         });
     } catch (error) {
@@ -267,19 +301,35 @@ adminRouter.get('/assets/:clientId', async (req: Request, res: Response) => {
             return;
         }
         
+        // Safe parsing for legacy/invalid data
+        let versionsArr: string[] = [];
+        try {
+            versionsArr = asset.versions ? JSON.parse(asset.versions) : [];
+            if (!Array.isArray(versionsArr)) versionsArr = [];
+        } catch {
+            versionsArr = [];
+        }
+        let vcObj: any = null;
+        try {
+            vcObj = asset.version_configs ? JSON.parse(asset.version_configs as any) : null;
+        } catch {
+            vcObj = null;
+        }
         res.json({
             asset: {
                 id: asset.id,
                 client_id: asset.client_id,
-                version: (asset.versions ? JSON.parse(asset.versions) : (asset.version ? [asset.version] : [])),
+                version: versionsArr.length > 0 ? versionsArr : (asset.version ? [asset.version] : []),
                 server: asset.server,
                 base_url: asset.base_url,
                 mods_manifest_url: asset.mods_manifest_url,
                 rp_manifest_url: asset.rp_manifest_url,
-                version_configs: asset.version_configs ? JSON.parse(asset.version_configs as any) : null,
+                version_configs: vcObj,
                 social_media: asset.social_media,
                 created_at: asset.created_at,
-                updated_at: asset.updated_at
+                updated_at: asset.updated_at,
+                source: (asset as any).source || 'standard',
+                custom_json: (asset as any).custom_json || null
             }
         });
     } catch (error) {
@@ -311,6 +361,43 @@ adminRouter.put('/assets/:clientId', async (req: Request, res: Response) => {
                 }
             } else if (updates.version_configs === null) {
                 updates.version_configs = null;
+            }
+        }
+        // Normalize custom_json for custom source
+        if (typeof updates.source !== 'undefined') {
+            if (updates.source === 'custom') {
+                if (typeof updates.custom_json === 'undefined') {
+                    res.status(400).json({ error: 'Bad Request', message: 'custom_json is required when source is custom' });
+                    return;
+                }
+                try {
+                    if (typeof updates.custom_json === 'string') JSON.parse(updates.custom_json);
+                    else if (typeof updates.custom_json === 'object' && updates.custom_json !== null) {
+                        updates.custom_json = JSON.stringify(updates.custom_json);
+                    } else {
+                        throw new Error('invalid');
+                    }
+                } catch {
+                    res.status(400).json({ error: 'Bad Request', message: 'custom_json must be valid JSON' });
+                    return;
+                }
+            } else {
+                // switching back to standard
+                if (typeof updates.custom_json !== 'undefined') delete updates.custom_json;
+            }
+        } else if (typeof updates.custom_json !== 'undefined') {
+            // If custom_json sent without source, try to keep consistent by forcing source to custom
+            try {
+                if (typeof updates.custom_json === 'string') JSON.parse(updates.custom_json);
+                else if (typeof updates.custom_json === 'object' && updates.custom_json !== null) {
+                    updates.custom_json = JSON.stringify(updates.custom_json);
+                } else {
+                    throw new Error('invalid');
+                }
+                updates.source = 'custom';
+            } catch {
+                res.status(400).json({ error: 'Bad Request', message: 'custom_json must be valid JSON' });
+                return;
             }
         }
         // If client sent merged version array, split into default + versions JSON
